@@ -1,0 +1,27 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	mod = "Orsell\'s Extended Entities"
+	description = "A set of custom made AngelScript entities that enhance the Hammer mapping experience as well as providing QoL improvements."
+	type = "Asset Pack"
+	id = 3688951981
+	thumbnail = ""
+	authors =
+	[
+		"Orsell",
+	]
+	dependencies = [  ]
+	tags =
+	[
+		"Scripts",
+	]
+	ignore = [ "code/ASLib" ]
+	metadata =
+	{
+	}
+	assets =
+	{
+		logo = ""
+		cover = ""
+	}
+	mounted_by_default = false
+}
