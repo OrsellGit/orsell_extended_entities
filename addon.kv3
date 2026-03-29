@@ -14,7 +14,7 @@
 	[
 		"Scripts",
 	]
-	ignore = [ "code/ASLib" ]
+	ignore = [ "code/ASLib", "code/as.predefined" ]
 	metadata =
 	{
 	}
