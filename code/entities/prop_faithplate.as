@@ -1,52 +1,27 @@
 /**
 * @brief   The usual faith plate setup but now made as a entity that can be placed down and just works.
-* @details WIP DOES NOT PROPERLY WORK!
+*! @details WIP DOES NOT PROPERLY WORK!
 * @authors Orsell
 *
 * @license Distributed under the MIT license.
 */
 
-#include "../ASLib/misc/assert.as"
-#include "../ASLib/misc/logger.as"
+#include "../extendedents_core.as"
 
-Logger plateLogger("prop_faithplate_Logger");
-
-ConVar extendedents_debug("extendedents_debug", "0");
-
-void EELog(const string&in msg, const int level = 0)
-{
-    if (!ConVarRef("extendedents_debug").GetBool())
-        return;
-
-    switch (level)
-    {
-        case 0:
-            plateLogger.Info(msg);
-            break;
-        case 1:
-            plateLogger.Warn(msg);
-            break;
-        default:
-            plateLogger.Info(msg);
-            break;
-    }
-}
-
-
-[ServerCommand("fling", "")]
-void Fling( const CommandArgs@ args )
+[ServerCommand("extendedents_plates_flingangle", "")]
+void FlingAngle( const CommandArgs@ args )
 {
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
-    Msgl("IsPlayer {}".format(player.IsPlayer()));
+    EELog("IsPlayer {}".format(player.IsPlayer()));
     player.GetPhysicsObject().SetVelocityInstantaneous(Vector(670,670,670), Vector(-90, 0, 0));
 }
 
-[ServerCommand("extendedents_testplates_inputs", "Test prop_faithplate using various inputs.")]
+[ServerCommand("extendedents_plates_inputs", "Test prop_faithplate using various inputs.")]
 void TestPlates( const CommandArgs@ args )
 {
     if (args.ArgC() < 2)
     {
-        EELog("extendedents_testplates_inputs: Usage 'extendedents_testplates_inputs (Input Option) (TempStateTime if 6)\nEnable: 0\nDisable: 1\nToggle: 2\nTempOn: 3\nTempOff: 4\nGetEnabled: 5\nSetTempStateTime: 6", 1);
+        EELog("extendedents_plates_inputs: Usage 'extendedents_plates_inputs (Input Option) (TempStateTime if 6)\nEnable: 0\nDisable: 1\nToggle: 2\nTempOn: 3\nTempOff: 4\nGetEnabled: 5\nSetTempStateTime: 6", 1);
         return;
     }
 
@@ -152,7 +127,7 @@ string GetFlingAnimation()
     // }
 
     //CBaseEntity@ targetEnt = EntityList().FindByName(null, this.kv_launchTarget);
-    CBaseEntity@ targetEnt = EntityList().FindByName(null, "faithplate_ent_testtarget");
+    CBaseEntity@ targetEnt = EntityList().FindByName(null, "faithplate_ent_testtarget2");
     if (@targetEnt == null)
     {
         EELog("Failed to get \"launchTarget\" from CPropFaithPlate!", 1);
@@ -169,6 +144,7 @@ string GetFlingAnimation()
     // Vector velocity = this.triggerCatapult.CalculateLaunchVector(); //! REPLACE WITH THIS WHEN EXPOSED
     //Vector velocity = this.CalculateLaunchVector(this, targetEnt);
     Vector velocity = CalculateLaunchVector(EntityList().FindByClassname(null, "player"), targetEnt);
+    velocity.z = EntityList().FindByClassname(null, "player").GetAbsOrigin().z;
     Msgl("Velocity: ({},{},{})".format(velocity.x, velocity.y, velocity.z));
 
 
@@ -204,20 +180,21 @@ string GetFlingAnimation()
     return ANGLED_ANIM;
 }
 
-[ServerCommand("extendedents_testplates_fling", "Test prop_faithplate flinging with its animations and trigger touch behavior.")]
+[ServerCommand("extendedents_plates_fling", "Test prop_faithplate flinging with its animations and trigger touch behavior.")]
 void TestFling( const CommandArgs@ args )
 {
     // if (args.ArgC() < 2)
     // {
-    //     EELog("extendedents_testplates_fling: Usage 'extendedents_testplates_fling (Input Option)\nFling (Based on target position. Used to test 'GetFlingAnimation()'.): 0 Forward Fling: 1 Upward Fling: 2", 1);
+    //     EELog("extendedents_plates_fling: Usage 'extendedents_plates_fling (Input Option)\nFling (Based on target position. Used to test 'GetFlingAnimation()'.): 0 Forward Fling: 1 Upward Fling: 2", 1);
     //     return;
     // }
 
-    //CPropFaithPlate@ plate = cast<CPropFaithPlate>(EntityList().FindByName(null, "faithplate_ent"));
+    CPropFaithPlate@ plate = cast<CPropFaithPlate>(EntityList().FindByName(null, "faithplate_ent"));
 
     //Vector vectorLaunch = CalculateLaunchVector( EntityList().FindByName(null, "player"), EntityList().FindByName(null, "faithplate_ent_testtarget"));
     //EELog('vectorLaunch: {} {} {}'.format(vectorLaunch.x, vectorLaunch.y, vectorLaunch.z));
     Msgl("Fling anim: {}".format(GetFlingAnimation()));
+    //plate.SetSequence(plate.LookupSequence(ANGLED_ANIM));
 
     // for (CBaseEntity@ ent = null; (@ent = EntityList().FindByClassname(ent, "prop_faithplate")) != null;)
     // {
@@ -261,9 +238,8 @@ void TestFling( const CommandArgs@ args )
 
 // ------------------------ ENTITY CONSTANTS ------------------------ \\
 
-// Yes I know this is a BEE model but it's what I have on hand that currently has both,
-// overgrown and clean variants with both on and off states. This will be replaced later.
-const string DEFAULT_MODEL = "models/bee2/props_ingame/faith_plate_toggle.mdl";
+// Default faith plate model does not support overgrown states, will need to be changed out by end user.
+const string DEFAULT_MODEL = "models/props/faith_plate.mdl";
 const string DEFAULT_LAUNCH_SOUND = "Metal_SeafloorCar.BulletImpact";
 const string DEFAULT_TICKING_SOUND = "World.RobotNegInteractPitchedUp";
 
@@ -306,6 +282,21 @@ class CPropFaithPlate : CBaseAnimating
 
     [KeyValue("artificialCollision", FIELD_BOOLEAN)]
     private bool kv_artificialCollision; // Vanilla faith plate model comes with no collision by default, so provide artificial collision based on the OBB of the model. If a custom model provides collision, this can be disabled.
+
+    [KeyValue("minTriggerSize", FIELD_VECTOR)]
+    private Vector kv_minTriggerSize;
+
+    [KeyValue("maxTriggerSize", FIELD_VECTOR)]
+    private Vector kv_maxTriggerSize;
+
+    [KeyValue("addSprite", FIELD_BOOLEAN)]
+    private bool kv_addSprite;
+
+    [KeyValue("spriteOnColor", FIELD_VECTOR)]
+    private Vector kv_spriteOnColor;
+
+    [KeyValue("spriteOffColor", FIELD_VECTOR)]
+    private Vector kv_spriteOffColor;
 
     [KeyValue("playSounds", FIELD_BOOLEAN)]
     private bool kv_playSounds;
@@ -392,6 +383,9 @@ class CPropFaithPlate : CBaseAnimating
 
     // The trigger_catapult that is part of the entity.
     private CBaseTrigger@ triggerCatapult = null; // TODO: Replace with CTriggerCatapult once exposed.
+
+    // env_sprite entity that is used for the faith plate light on top.
+    private CBaseEntity@ plateSprite = null;
 
     // Tracking the faith plates current state.
     private bool faithPlateState;
@@ -509,6 +503,15 @@ class CPropFaithPlate : CBaseAnimating
         this.faithPlateState = enable;
         this.triggerCatapult.SetSolid(this.faithPlateState ? ESolidType::SOLID_OBB : ESolidType::SOLID_NONE); // TODO-FIXME: CBaseTrigger Enabled/Disabled wasn't exposed, replace with that when it is.
         this.SetSkin(this.RetrieveStateSkin(this.faithPlateState));
+        if (this.kv_addSprite)
+            this.plateSprite.KeyValue("renderamt", enable ? "128" : "0");
+        else
+        {
+            // TODO: Remove these to strings once converting Vectors to strings is a thing
+            string offColor = "{} {} {}".format(this.kv_spriteOffColor.x, this.kv_spriteOffColor.y, this.kv_spriteOffColor.z);
+            string onColor = "{} {} {}".format(this.kv_spriteOnColor.x, this.kv_spriteOnColor.y, this.kv_spriteOnColor.z);
+            this.plateSprite.KeyValue("rendercolor", enable ? onColor : offColor);
+        }
 
         if (enable)
         {
@@ -553,8 +556,8 @@ class CPropFaithPlate : CBaseAnimating
     */
     void Precache() override
     {
-        // if (this.kv_modelStr.empty())
-        //     this.kv_modelStr = DEFAULT_MODEL;
+        if (this.kv_modelStr.empty())
+            this.kv_modelStr = DEFAULT_MODEL;
         if (this.kv_launchSound.empty())
             this.kv_launchSound = DEFAULT_LAUNCH_SOUND;
         if (this.kv_tickingSound.empty())
@@ -573,7 +576,7 @@ class CPropFaithPlate : CBaseAnimating
     {
         EELog('Spawning prop_faithplate with name: {}'.format(this.GetEntityName()));
         EELog('model: {}'.format(this.kv_modelStr));
-        EELog('overgroundEnaled: {}'.format(this.kv_overgrownEnabled));
+        EELog('overgroundEnabled: {}'.format(this.kv_overgrownEnabled));
         EELog('playSounds: {}'.format(this.kv_playSounds));
         EELog('launchSound: {}'.format(this.kv_launchSound));
         EELog('tickingSound: {}'.format(this.kv_tickingSound));
@@ -583,22 +586,20 @@ class CPropFaithPlate : CBaseAnimating
         this.Precache();
         CBaseAnimating::Precache();
         this.SetModel(this.kv_modelStr);
-        CBaseAnimating::Spawn();
 
         if (this.kv_artificialCollision)
             this.SetSolid(ESolidType::SOLID_OBB);
         else
             this.SetSolid(ESolidType::SOLID_VPHYSICS);
 
+        CBaseAnimating::Spawn();
+
         // TODO: Replace this with separate entity class. Maybe? Might not need to.
         @this.triggerCatapult = @util::CreateEntityByNameT<CBaseTrigger>("trigger_catapult");
-        this.triggerCatapult.Spawn();
-        //this.triggerCatapult.InitTrigger();
-        string spawnFlags;
-        this.GetKeyValue("spawnflags", spawnFlags);
-        this.triggerCatapult.KeyValue("spawnflags", spawnFlags );
+
 
         //! This is annoying! There has got to be a better way!
+        this.triggerCatapult.AddSpawnFlags(this.GetSpawnFlags());
         this.triggerCatapult.KeyValue("playerspeed", kv_playerSpeed );
         this.triggerCatapult.KeyValue("physicsspeed", kv_physicsSpeed );
         this.triggerCatapult.KeyValue("launchdirection", kv_launchDirection );
@@ -616,6 +617,10 @@ class CPropFaithPlate : CBaseAnimating
         this.triggerCatapult.KeyValue("entryangletolerance", kv_entryAngleTolerance );
         if (this.kv_playSounds)
             this.triggerCatapult.KeyValue("launchsound", kv_launchSound );
+        else
+             this.triggerCatapult.KeyValue("launchsound", "" );
+
+        this.triggerCatapult.Spawn();
 
         EELog("-----------------------------");
         EELog('playerspeed: {}'.format(this.kv_playerSpeed));
@@ -623,19 +628,43 @@ class CPropFaithPlate : CBaseAnimating
         EELog('launchtarget: {}'.format(this.kv_launchTarget));
         EELog('tempStateTime: {}'.format(this.kv_tempStateTime));
         EELog('startDisabled: {}'.format(this.kv_startDisabled));
+        EELog('launchsound: {}'.format(this.kv_launchSound));
         EELog("-----------------------------");
 
         Vector originVec = this.GetAbsOrigin();
+        //originVec.z += 10;
 
-        originVec.z += 10;
         this.triggerCatapult.SetAbsOrigin(originVec);
         this.triggerCatapult.SetAbsAngles(this.GetAbsAngles());
 
-        // TODO: Add the ability to change the trigger size for the faith plate with a KV.
-        this.triggerCatapult.SetCollisionBounds(Vector(-25, -13, -5), Vector(25, 13, 5));
+        this.triggerCatapult.SetCollisionBounds(this.kv_minTriggerSize, this.kv_maxTriggerSize);
         this.triggerCatapult.SetMoveType(EMoveType::MOVETYPE_NONE);
         this.triggerCatapult.SetSolid(ESolidType::SOLID_OBB);
         this.triggerCatapult.SetParent(this);
+
+        if (this.kv_addSprite)
+        {
+            // TODO: Remove these to strings once converting Vectors to strings is a thing
+            string offColor = "{} {} {}".format(this.kv_spriteOffColor.x, this.kv_spriteOffColor.y, this.kv_spriteOffColor.z);
+            string onColor = "{} {} {}".format(this.kv_spriteOnColor.x, this.kv_spriteOnColor.y, this.kv_spriteOnColor.z);
+            // TODO: Change to CSprite once it is exposed.
+            @this.plateSprite = util::CreateEntityByNameT<CBaseEntity>("env_sprite");
+            this.plateSprite.KeyValue("rendercolor", this.kv_startDisabled ? offColor : onColor);
+            this.plateSprite.KeyValue("renderamt", "128");
+            this.plateSprite.KeyValue("model", "sprites/glow02.vmt");
+            this.plateSprite.KeyValue("scale", "0.3");
+            this.plateSprite.KeyValue("GlowProxySize", "5");
+            this.plateSprite.KeyValue("HDRColorScale", "1.0");
+            this.plateSprite.KeyValue("spawnflags", !this.kv_startDisabled);
+            this.plateSprite.Spawn();
+            this.plateSprite.SetParent(this);
+            this.plateSprite.SetParentAttachment("light");
+
+            string rendercolor;
+            this.plateSprite.GetKeyValue("rendercolor", rendercolor);
+            EELog("Plate Sprite:");
+            EELog("renderColor: {}".format(rendercolor));
+        }
 
         this.faithPlateState = !this.kv_startDisabled;
         this.SetSkin(RetrieveStateSkin(this.faithPlateState));
@@ -681,6 +710,16 @@ class CPropFaithPlate : CBaseAnimating
             this.EmitSound(kv_tickingSound);
 
         this.SetSkin(this.RetrieveStateSkin(blinkOn));
+        if (this.kv_addSprite)
+            this.plateSprite.KeyValue("renderamt", blinkOn ? "128" : "0");
+        else
+        {
+            // TODO: Remove these to strings once converting Vectors to strings is a thing
+            string offColor = "{} {} {}".format(this.kv_spriteOffColor.x, this.kv_spriteOffColor.y, this.kv_spriteOffColor.z);
+            string onColor = "{} {} {}".format(this.kv_spriteOnColor.x, this.kv_spriteOnColor.y, this.kv_spriteOnColor.z);
+            this.plateSprite.KeyValue("rendercolor", blinkOn ? onColor : offColor);
+        }
+
         SetNextThink(util::GetCurrentTime() + TEMP_STATE_BLINK_INTERVAL, "CPropFaithPlate::PlateTempStateThink");
         //Msgl("PlateTempStateThink next think: " + util::GetCurrentTime() + TEMP_STATE_BLINK_INTERVAL);
     }
