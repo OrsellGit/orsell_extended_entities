@@ -8,11 +8,28 @@
 
 #include "../extendedents_core.as"
 
+ConVar extendedents_debug_plates("extendedents_debug_plates", "0");
+
+/**
+* @brief Specific logging function for prop_faithplate debugging.
+*        Needs "extendedents_debug_plates" to be 1 to log to console.
+* @param Message to send to console.
+* @param Log level. 0 = Info, 1 = Warn
+*/
+void EEPlateLog(const string&in msg, const int level = 0)
+{
+    if (!extendedents_debug_plates.GetBool())
+        return;
+
+    EELog("[prop_faithplate] " + msg, level);
+}
+
+
 [ServerCommand("extendedents_plates_flingangle", "")]
 void FlingAngle( const CommandArgs@ args )
 {
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
-    EELog("IsPlayer {}".format(player.IsPlayer()));
+    EEPlateLog("IsPlayer {}".format(player.IsPlayer()));
     player.GetPhysicsObject().SetVelocityInstantaneous(Vector(670,670,670), Vector(-90, 0, 0));
 }
 
@@ -21,7 +38,7 @@ void TestPlates( const CommandArgs@ args )
 {
     if (args.ArgC() < 2)
     {
-        EELog("extendedents_plates_inputs: Usage 'extendedents_plates_inputs (Input Option) (TempStateTime if 6)\nEnable: 0\nDisable: 1\nToggle: 2\nTempOn: 3\nTempOff: 4\nGetEnabled: 5\nSetTempStateTime: 6", 1);
+        EEPlateLog("extendedents_plates_inputs: Usage 'extendedents_plates_inputs (Input Option) (TempStateTime if 6)\nEnable: 0\nDisable: 1\nToggle: 2\nTempOn: 3\nTempOff: 4\nGetEnabled: 5\nSetTempStateTime: 6", 1);
         return;
     }
 
@@ -75,7 +92,7 @@ void TestPlates( const CommandArgs@ args )
             }
             default:
             {
-                EELog("Invalid input option passed. 0-6", 1);
+                EEPlateLog("Invalid input option passed. 0-6", 1);
                 return;
             }
         }
@@ -119,7 +136,7 @@ Vector CalculateLaunchVector( CBaseEntity@ pVictim, CBaseEntity@ pTarget  )
 string GetFlingAnimation()
 {
     //if (!this.triggerCatapult.GetKeyValue("launchTarget", launchTarget))
-    //Msgl("kv_launchTarget: {}".format(this.kv_launchTarget));
+    //EEPlateLog("kv_launchTarget: {}".format(this.kv_launchTarget));
     // if (!this.GetKeyValue("launchtarget", this.kv_launchTarget))
     // {
     //     plateLogger.Warn("\"launchTarget\" not defined for CPropFaithPlate!", 1);
@@ -130,7 +147,7 @@ string GetFlingAnimation()
     CBaseEntity@ targetEnt = EntityList().FindByName(null, "faithplate_ent_testtarget2");
     if (@targetEnt == null)
     {
-        EELog("Failed to get \"launchTarget\" from CPropFaithPlate!", 1);
+        EEPlateLog("Failed to get \"launchTarget\" from CPropFaithPlate!", 1);
         return "";
     }
 
@@ -185,14 +202,14 @@ void TestFling( const CommandArgs@ args )
 {
     // if (args.ArgC() < 2)
     // {
-    //     EELog("extendedents_plates_fling: Usage 'extendedents_plates_fling (Input Option)\nFling (Based on target position. Used to test 'GetFlingAnimation()'.): 0 Forward Fling: 1 Upward Fling: 2", 1);
+    //     EEPlateLog("extendedents_plates_fling: Usage 'extendedents_plates_fling (Input Option)\nFling (Based on target position. Used to test 'GetFlingAnimation()'.): 0 Forward Fling: 1 Upward Fling: 2", 1);
     //     return;
     // }
 
     CPropFaithPlate@ plate = cast<CPropFaithPlate>(EntityList().FindByName(null, "faithplate_ent"));
 
     //Vector vectorLaunch = CalculateLaunchVector( EntityList().FindByName(null, "player"), EntityList().FindByName(null, "faithplate_ent_testtarget"));
-    //EELog('vectorLaunch: {} {} {}'.format(vectorLaunch.x, vectorLaunch.y, vectorLaunch.z));
+    //EEPlateLog('vectorLaunch: {} {} {}'.format(vectorLaunch.x, vectorLaunch.y, vectorLaunch.z));
     Msgl("Fling anim: {}".format(GetFlingAnimation()));
     //plate.SetSequence(plate.LookupSequence(ANGLED_ANIM));
 
@@ -208,7 +225,7 @@ void TestFling( const CommandArgs@ args )
 
     //     Msgl(plate.GetFlingAnimation());
 
-    //     //Msgl(plate.LookupSequence(ANGLED_ANIM));
+    //     EEPlateLog(plate.LookupSequence(ANGLED_ANIM));
     //     //plate.SetSequence(plate.LookupSequence(STRAIGHTUP_ANIM));
     //     //plate.SetSequence(0);
     //     // switch (args.Arg(1).toInt())
@@ -283,11 +300,17 @@ class CPropFaithPlate : CBaseAnimating
     [KeyValue("artificialCollision", FIELD_BOOLEAN)]
     private bool kv_artificialCollision; // Vanilla faith plate model comes with no collision by default, so provide artificial collision based on the OBB of the model. If a custom model provides collision, this can be disabled.
 
-    [KeyValue("minTriggerSize", FIELD_VECTOR)]
-    private Vector kv_minTriggerSize;
+    [KeyValue("triggerWidth", FIELD_FLOAT)]
+    private float kv_triggerWidth;
 
-    [KeyValue("maxTriggerSize", FIELD_VECTOR)]
-    private Vector kv_maxTriggerSize;
+    [KeyValue("triggerDepth", FIELD_FLOAT)]
+    private float kv_triggerDepth;
+
+    [KeyValue("triggerHeight", FIELD_FLOAT)]
+    private float kv_triggerHeight;
+
+    [KeyValue("triggerPosOffset", FIELD_VECTOR)]
+    private Vector kv_triggerPosOffset;
 
     [KeyValue("addSprite", FIELD_BOOLEAN)]
     private bool kv_addSprite;
@@ -297,6 +320,9 @@ class CPropFaithPlate : CBaseAnimating
 
     [KeyValue("spriteOffColor", FIELD_VECTOR)]
     private Vector kv_spriteOffColor;
+
+    [KeyValue("spriteBrightness", FIELD_INTEGER)]
+    private int kv_spriteBrightness;
 
     [KeyValue("playSounds", FIELD_BOOLEAN)]
     private bool kv_playSounds;
@@ -488,7 +514,7 @@ class CPropFaithPlate : CBaseAnimating
     {
         if (@activator == null)
         {
-            //Msgl("SetEnable THIS ACTIVATOR");
+            EEPlateLog("SetEnable THIS ACTIVATOR");
             @activator = @this;
         }
 
@@ -497,14 +523,14 @@ class CPropFaithPlate : CBaseAnimating
         {
             this.goalTempTime = util::GetCurrentTime();
             this.interruptTempState = true;
-            //Msgl("SetEnable INTERRUPT!");
+            EEPlateLog("SetEnable INTERRUPT!");
         }
 
         this.faithPlateState = enable;
         this.triggerCatapult.SetSolid(this.faithPlateState ? ESolidType::SOLID_OBB : ESolidType::SOLID_NONE); // TODO-FIXME: CBaseTrigger Enabled/Disabled wasn't exposed, replace with that when it is.
         this.SetSkin(this.RetrieveStateSkin(this.faithPlateState));
-        if (this.kv_addSprite)
-            this.plateSprite.KeyValue("renderamt", enable ? "128" : "0");
+        if (this.kv_useNewDisableSkin)
+            this.plateSprite.KeyValue("renderamt", enable ? this.kv_spriteBrightness : "0");
         else
         {
             // TODO: Remove these to strings once converting Vectors to strings is a thing
@@ -515,7 +541,7 @@ class CPropFaithPlate : CBaseAnimating
 
         if (enable)
         {
-            //Msgl("SetEnable ENABLE");
+            EEPlateLog("SetEnable ENABLE");
             this.out_onEnabled.Fire(activator, this, 0.0f);
         }
         else
@@ -531,17 +557,17 @@ class CPropFaithPlate : CBaseAnimating
     {
         if (@activator == null)
         {
-            //Msgl("SetTempState ACTIVATOR THIS");
+            EEPlateLog("SetTempState ACTIVATOR THIS");
             @activator = @this;
         }
 
-        //Msgl("SetTempState enableState: {}".format(enableState));
+        EEPlateLog("SetTempState enableState: {}".format(enableState));
         this.SetEnable(enableState, activator);
         // Current time + time to be in temporary state = when temporary state ends. Don't set when tempStateTime is negative for forever temporary state.
         if (this.kv_tempStateTime >= 0.0f)
         {
             this.goalTempTime = util::GetCurrentTime() + this.kv_tempStateTime;
-            //Msgl("SetTempState goalTempTime: {}".format(this.goalTempTime));
+            EEPlateLog("SetTempState goalTempTime: {}".format(this.goalTempTime));
         }
         SetThink(ThinkFunc_t(this.PlateTempStateThink), util::GetCurrentTime(), "CPropFaithPlate::PlateTempStateThink");
 
@@ -574,29 +600,32 @@ class CPropFaithPlate : CBaseAnimating
     */
     void Spawn() override
     {
-        EELog('Spawning prop_faithplate with name: {}'.format(this.GetEntityName()));
-        EELog('model: {}'.format(this.kv_modelStr));
-        EELog('overgroundEnabled: {}'.format(this.kv_overgrownEnabled));
-        EELog('playSounds: {}'.format(this.kv_playSounds));
-        EELog('launchSound: {}'.format(this.kv_launchSound));
-        EELog('tickingSound: {}'.format(this.kv_tickingSound));
-        EELog('tempStateTime: {}'.format(this.kv_tempStateTime));
-        EELog('startDisabled: {}'.format(this.kv_startDisabled));
+        // DEBUG
+        EEPlateLog("-----------------------------");
+        EEPlateLog('Spawning prop_faithplate with name: {}'.format(this.GetEntityName()));
+        EEPlateLog('model: {}'.format(this.kv_modelStr));
+        EEPlateLog('overgroundEnabled: {}'.format(this.kv_overgrownEnabled));
+        EEPlateLog('playSounds: {}'.format(this.kv_playSounds));
+        EEPlateLog('launchSound: {}'.format(this.kv_launchSound));
+        EEPlateLog('tickingSound: {}'.format(this.kv_tickingSound));
+        EEPlateLog('tempStateTime: {}'.format(this.kv_tempStateTime));
+        EEPlateLog('startDisabled: {}'.format(this.kv_startDisabled));
+        EEPlateLog("-----------------------------");
 
+        // Precache faith plate assets
         this.Precache();
         CBaseAnimating::Precache();
-        this.SetModel(this.kv_modelStr);
+        CBaseAnimating::Spawn();
 
+        // Setup faith
+        this.SetModel(this.kv_modelStr);
         if (this.kv_artificialCollision)
             this.SetSolid(ESolidType::SOLID_OBB);
         else
             this.SetSolid(ESolidType::SOLID_VPHYSICS);
 
-        CBaseAnimating::Spawn();
-
         // TODO: Replace this with separate entity class. Maybe? Might not need to.
         @this.triggerCatapult = @util::CreateEntityByNameT<CBaseTrigger>("trigger_catapult");
-
 
         //! This is annoying! There has got to be a better way!
         this.triggerCatapult.AddSpawnFlags(this.GetSpawnFlags());
@@ -622,25 +651,27 @@ class CPropFaithPlate : CBaseAnimating
 
         this.triggerCatapult.Spawn();
 
-        EELog("-----------------------------");
-        EELog('playerspeed: {}'.format(this.kv_playerSpeed));
-        EELog('launchdirection: {} {} {}'.format(this.kv_launchDirection.x, this.kv_launchDirection.y, this.kv_launchDirection.z));
-        EELog('launchtarget: {}'.format(this.kv_launchTarget));
-        EELog('tempStateTime: {}'.format(this.kv_tempStateTime));
-        EELog('startDisabled: {}'.format(this.kv_startDisabled));
-        EELog('launchsound: {}'.format(this.kv_launchSound));
-        EELog("-----------------------------");
+        // DEBUG
+        EEPlateLog("-----------------------------");
+        EEPlateLog('playerspeed: {}'.format(this.kv_playerSpeed));
+        EEPlateLog('launchdirection: {} {} {}'.format(this.kv_launchDirection.x, this.kv_launchDirection.y, this.kv_launchDirection.z));
+        EEPlateLog('launchtarget: {}'.format(this.kv_launchTarget));
+        EEPlateLog('tempStateTime: {}'.format(this.kv_tempStateTime));
+        EEPlateLog('startDisabled: {}'.format(this.kv_startDisabled));
+        EEPlateLog('launchsound: {}'.format(this.kv_launchSound));
+        EEPlateLog("-----------------------------");
 
-        Vector originVec = this.GetAbsOrigin();
-        //originVec.z += 10;
-
-        this.triggerCatapult.SetAbsOrigin(originVec);
-        this.triggerCatapult.SetAbsAngles(this.GetAbsAngles());
-
-        this.triggerCatapult.SetCollisionBounds(this.kv_minTriggerSize, this.kv_maxTriggerSize);
+        // Set trigger size using the three KVs, cursed and a tad annoying.
+        Vector sizeVector, sizeVectorNegated;
+        sizeVectorNegated = sizeVector = Vector(this.kv_triggerWidth, this.kv_triggerDepth, this.kv_triggerHeight) / 2;
+        sizeVectorNegated.Negate();
+        this.triggerCatapult.SetCollisionBounds(sizeVectorNegated, sizeVector);
         this.triggerCatapult.SetMoveType(EMoveType::MOVETYPE_NONE);
         this.triggerCatapult.SetSolid(ESolidType::SOLID_OBB);
         this.triggerCatapult.SetParent(this);
+
+        this.triggerCatapult.SetAbsOrigin(this.GetAbsOrigin() + this.kv_triggerPosOffset);
+        this.triggerCatapult.SetAbsAngles(this.GetAbsAngles());
 
         if (this.kv_addSprite)
         {
@@ -650,20 +681,16 @@ class CPropFaithPlate : CBaseAnimating
             // TODO: Change to CSprite once it is exposed.
             @this.plateSprite = util::CreateEntityByNameT<CBaseEntity>("env_sprite");
             this.plateSprite.KeyValue("rendercolor", this.kv_startDisabled ? offColor : onColor);
-            this.plateSprite.KeyValue("renderamt", "128");
-            this.plateSprite.KeyValue("model", "sprites/glow02.vmt");
-            this.plateSprite.KeyValue("scale", "0.3");
+            this.plateSprite.KeyValue("renderamt", this.kv_spriteBrightness);
+            this.plateSprite.KeyValue("rendermode", "9");
+            this.plateSprite.KeyValue("model", "sprites/light_glow02.vmt");
+            this.plateSprite.KeyValue("scale", "0.7");
             this.plateSprite.KeyValue("GlowProxySize", "5");
             this.plateSprite.KeyValue("HDRColorScale", "1.0");
             this.plateSprite.KeyValue("spawnflags", !this.kv_startDisabled);
             this.plateSprite.Spawn();
             this.plateSprite.SetParent(this);
             this.plateSprite.SetParentAttachment("light");
-
-            string rendercolor;
-            this.plateSprite.GetKeyValue("rendercolor", rendercolor);
-            EELog("Plate Sprite:");
-            EELog("renderColor: {}".format(rendercolor));
         }
 
         this.faithPlateState = !this.kv_startDisabled;
@@ -677,26 +704,22 @@ class CPropFaithPlate : CBaseAnimating
     */
     void PlateTempStateThink()
     {
-        //Msgl("-------------");
-        //Msgl("TEST THINKKKK");
-        //Msgl("goalTempTime: {}".format(this.goalTempTime));
-        //Msgl("interruptTempState: {}".format(this.interruptTempState));
-        //Msgl("GetCurrentTime: {}".format(util::GetCurrentTime()));
-        //Msgl("this.goalTempTime <= util::GetCurrentTime(): {}".format(this.goalTempTime <= util::GetCurrentTime()));
-        //Msgl("-------------");
+        EEPlateLog("-------------");
+        EEPlateLog("TEST THINKKKK");
+        EEPlateLog("goalTempTime: {}".format(this.goalTempTime));
+        EEPlateLog("interruptTempState: {}".format(this.interruptTempState));
+        EEPlateLog("GetCurrentTime: {}".format(util::GetCurrentTime()));
+        EEPlateLog("this.goalTempTime <= util::GetCurrentTime(): {}".format(this.goalTempTime <= util::GetCurrentTime()));
+        EEPlateLog("-------------");
 
         // End state when goal time has passed. Do not exit when goal is negative as that is used for temp states which go on forever.
-        if ((this.goalTempTime <= util::GetCurrentTime()) || this.interruptTempState)
+        if ((this.goalTempTime <= util::GetCurrentTime()) && kv_tempStateTime > 0.0f || this.interruptTempState)
         {
             SetNextThink(-1, "CPropFaithPlate::PlateTempStateThink");
             this.goalTempTime = 0.0f;
 
-            //Msgl("PlateTempStateThink interruptTempState: {}".format(this.interruptTempState));
             if (!this.interruptTempState)
-            {
-                //Msgl("PlateTempStateThink no interupt");
                 this.SetEnable(!this.faithPlateState);
-            }
 
             this.interruptTempState = false;
             this.out_onTempExit.Fire(this.faithPlateState ? 1 : 0, this, this);
@@ -705,13 +728,12 @@ class CPropFaithPlate : CBaseAnimating
 
         // Switch between on and off skin states. Blinks every TEMP_STATE_BLINK_INTERVAL seconds.
         bool blinkOn = (int(util::GetCurrentTime() / TEMP_STATE_BLINK_INTERVAL) % 2) == 0;
-
         if (!blinkOn)
             this.EmitSound(kv_tickingSound);
 
         this.SetSkin(this.RetrieveStateSkin(blinkOn));
-        if (this.kv_addSprite)
-            this.plateSprite.KeyValue("renderamt", blinkOn ? "128" : "0");
+        if (this.kv_useNewDisableSkin)
+            this.plateSprite.KeyValue("renderamt", blinkOn ? this.kv_spriteBrightness : "0");
         else
         {
             // TODO: Remove these to strings once converting Vectors to strings is a thing
@@ -721,7 +743,7 @@ class CPropFaithPlate : CBaseAnimating
         }
 
         SetNextThink(util::GetCurrentTime() + TEMP_STATE_BLINK_INTERVAL, "CPropFaithPlate::PlateTempStateThink");
-        //Msgl("PlateTempStateThink next think: " + util::GetCurrentTime() + TEMP_STATE_BLINK_INTERVAL);
+        EEPlateLog("PlateTempStateThink next think: " + util::GetCurrentTime() + TEMP_STATE_BLINK_INTERVAL);
     }
 
 
@@ -749,14 +771,14 @@ class CPropFaithPlate : CBaseAnimating
     [Input("TempOn", FIELD_INPUT)]
     void TempOn( const InputData&in data )
     {
-        //Msgl("TEMP ON");
+        EEPlateLog("TEMP ON");
         this.SetTempState(true, data.activator);
     }
 
     [Input("TempOff", FIELD_INPUT)]
     void TempOff( const InputData&in data )
     {
-        //Msgl("TEMP OFF");
+        EEPlateLog("TEMP OFF");
         this.SetTempState(false, data.activator);
     }
 
