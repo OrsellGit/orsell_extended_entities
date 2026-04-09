@@ -18,16 +18,13 @@
 	model(studio) : "Faith Plate Model" : "models/props/faith_plate.mdl" : "The model to be used in game and displayed in Hammer."
 	overgrownEnabled(boolean) : "Use Overgrown Model" : 0 : "If the overgrown skins of the faith plate model should be used. Leave 0 if the model doesn't have overgrown skins."
 	useNewDisableSkin(boolean) : "Use New Disabled Faith Plate Skin" : 0 : "Len's EverythingPBR faith plate model comes with a off light skin along with the usual blue and orange. Should this off skin be used instead the orange skin?"
-	artificialCollision(boolean) : "Provide Artificial Collision" : 1 : "The vanilla faith plate model doesn't come with any collision. However, custom models can provide this collision. If a model with custom collision is selected, disable this so collision based on the OBB is not provided so the model can take over with its own."
+	artificialCollision(boolean) : "Provide Artificial Collision" : 1 : "The vanilla faith plate model doesn't come with any collision. However, custom models can provide this collision.\nIf a model with custom collision is selected, disable this so collision based on the OBB is not provided so the model can take over with its own."
 
-	//minTriggerSize(vector) : "Minimum Trigger Size" : "-25 -13 -5" : "The point relative to the entity's origin marking the minimum collision size."
-	//maxTriggerSize(vector) : "Maximum Trigger Size" : "25 13 5" : "The point relative to the entity's origin marking the maximum collision size."
-
-	triggerWidth(float) : "Trigger Width" : 50 : "The width of the trigger along the x-axis/red axis."
-	triggerDepth(float) : "Trigger Depth" : 26 : "The depth of the trigger along the y-axis/green axis."
+	triggerWidth(float) : "Trigger Width" : 60 : "The width of the trigger along the x-axis/red axis."
+	triggerDepth(float) : "Trigger Depth" : 25 : "The depth of the trigger along the y-axis/green axis."
 	triggerHeight(float) : "Trigger Height" : 10 : "The height of the trigger along the z-axis/blue axis."
 
-	triggerPosOffset(vector) : "Trigger Position Offset" : "0 0 5" : "Offset the position of the trigger for the faith plate. NOTE: The trigger preview does not show this offset."
+	triggerPosOffset(vector) : "Trigger Position Offset" : "0 0 5" : "Offset the position of the trigger for the faith plate.\n\nNOTE: The trigger preview does not show this offset."
 
 	addSprite(boolean) : "Light Sprite" : 0 : "Add a glowing sprite to the top of the faith plate above the light. Will change color depending on faith plate state."
 	spriteOnColor(color255) : "Light Sprite On Color" : "0 255 255" : "Color of the faith plate sprite when the faith plate is ON."
