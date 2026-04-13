@@ -700,7 +700,7 @@ class CPropFaithPlate : CBaseAnimating
     }
 
     /**
-    * @brief Think function used for both temporary off and on inputs. Makes the plate blink its on and off indicator and emit the
+    * @brief Think function used for both temporary off and on inputs. Makes the plate blink its on and off indicator and emit the sound set ticking.
     */
     void PlateTempStateThink()
     {
