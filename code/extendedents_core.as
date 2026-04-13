@@ -6,8 +6,8 @@
 * @license Distributed under the MIT license.
 */
 
-#include "ASLib/misc/assert.as"
-#include "ASLib/misc/logger.as"
+#include "../../ASLib/misc/assert.as"
+#include "../../ASLib/misc/logger.as"
 
 ConVar extendedents_debug("extendedents_debug", "0");
 Logger EELogger("Extended Entities");
