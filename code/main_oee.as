@@ -1,5 +1,5 @@
 /**
-* @brief   Main entree point of the AngelScript.
+* @brief   Main entree point of Orsell's Extended Entities.
 * @details
 * @authors Orsell
 *
