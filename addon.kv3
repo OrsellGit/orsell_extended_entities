@@ -16,8 +16,8 @@
 	]
 	ignore =
 	[
-		"ASLib",
-		"as.predefined",
+		"code/ASLib",
+		"code/as.predefined",
 	]
 	metadata =
 	{
