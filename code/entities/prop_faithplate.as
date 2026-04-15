@@ -210,8 +210,8 @@ void TestFling( const CommandArgs@ args )
 
     //Vector vectorLaunch = CalculateLaunchVector( EntityList().FindByName(null, "player"), EntityList().FindByName(null, "faithplate_ent_testtarget"));
     //EEPlateLog('vectorLaunch: {} {} {}'.format(vectorLaunch.x, vectorLaunch.y, vectorLaunch.z));
-    Msgl("Fling anim: {}".format(GetFlingAnimation()));
-    //plate.SetSequence(plate.LookupSequence(ANGLED_ANIM));
+    //Msgl("Fling anim: {}".format(GetFlingAnimation()));
+    plate.SetSequence(plate.LookupSequence(ANGLED_ANIM));
 
     // for (CBaseEntity@ ent = null; (@ent = EntityList().FindByClassname(ent, "prop_faithplate")) != null;)
     // {
