@@ -38,7 +38,7 @@
 
 	triggerPosOffset(vector) : "Trigger Position Offset" : "0 0 5" : "Offset the position of the trigger for the faith plate.\n\nNOTE: The trigger preview does not show this offset."
 
-	addSprite(boolean) : "Light Sprite" : 0 : "Add a glowing sprite to the top of the faith plate above the light. Will change color depending on faith plate state."
+	addSprite(boolean) : "Light Sprite" : 0 : "Add a glowing sprite to the top of the faith plate above the light. Will change color depending on faith plate state. REQUIRES THAT THE FAITH PLATE HAS A MODEL ATTACHMENT NAMED 'light'!"
 	spriteOnColor(color255) : "Light Sprite On Color" : "0 255 255" : "Color of the faith plate sprite when the faith plate is ON."
 	spriteOffColor(color255) : "Light Sprite Off Color" : "255 144 0" : "Color of the faith plate sprite when the faith plate is OFF. NOTE: Sprite will be turned off instead of using this color when 'Use New Disabled Faith Plate Skin' is enabled."
 	spriteBrightness(integer) : "Light Sprite Brightness" : 150 : "Brightness of the faith plate sprite."

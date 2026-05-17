@@ -363,6 +363,7 @@ class CPropFaithPlate : CBaseAnimating
     [KeyValue("tempStateTime", FIELD_FLOAT)]
     private float kv_tempStateTime; // How long the faith plate should stay disable in the temporary off period.
 
+
     // ------------------------ TRIGGER_CATAPULT KEYVALUE MEMBERS ------------------------ \\
 
     [KeyValue("playerspeed", FIELD_FLOAT)]
@@ -430,6 +431,7 @@ class CPropFaithPlate : CBaseAnimating
 
     [Output("OnCatapulted")]
     private COutputEvent out_onCatapulted;
+
 
     // ------------------------ ENTITY PRIVATE FUNCTIONS ------------------------ \\
 
@@ -723,7 +725,7 @@ class CPropFaithPlate : CBaseAnimating
         this.m_pTriggerCatapult.Get().SetAbsOrigin(this.GetAbsOrigin() + this.kv_triggerPosOffset);
         this.m_pTriggerCatapult.Get().SetAbsAngles(this.GetAbsAngles());
 
-        if (this.kv_addSprite)
+        if (this.kv_addSprite && this.LookupAttachment("light") > 0)
         {
             // TODO: Remove these to strings once converting Vectors to strings is a thing
             string offColor = "{} {} {}".format(this.kv_spriteOffColor.x, this.kv_spriteOffColor.y, this.kv_spriteOffColor.z);
@@ -739,7 +741,7 @@ class CPropFaithPlate : CBaseAnimating
             this.m_pPlateSprite.Get().KeyValue("HDRColorScale", "1.0");
             this.m_pPlateSprite.Get().KeyValue("spawnflags", !this.kv_startDisabled);
             this.m_pPlateSprite.Get().Spawn();
-            this.m_pTriggerCatapult.Get().Activate();
+            this.m_pPlateSprite.Get().Activate();
             this.m_pPlateSprite.Get().SetParent(this);
             this.m_pPlateSprite.Get().SetParentAttachment("light");
         }
@@ -850,35 +852,43 @@ class CPropFaithPlate : CBaseAnimating
         this.kv_tempStateTime = data.value.Float();
     }
 
-    // ------------------------ TRIGGER_CATAPULT INPUT FUNCTIONS ------------------------ \\
 
+    // ------------------------ TRIGGER_CATAPULT INPUT FUNCTIONS ------------------------ \\
 
     [Input("SetPlayerSpeed", FIELD_FLOAT)]
     void SetPlayerSpeed( const InputData&in data )
     {
         this.kv_playerSpeed = data.value.Float();
-        this.m_pTriggerCatapult.Get().KeyValue("playerspeed", this.kv_playerSpeed);
+        Variant setPlayerSpeedVal;
+        setPlayerSpeedVal.SetFloat(this.kv_playerSpeed);
+        this.m_pTriggerCatapult.Get().FireInput("SetPlayerSpeed", setPlayerSpeedVal, 0, data.activator, data.caller);
     }
 
     [Input("SetPhysicsSpeed", FIELD_FLOAT)]
     void SetPhysicsSpeed( const InputData&in data )
     {
         this.kv_physicsSpeed = data.value.Float();
-        this.m_pTriggerCatapult.Get().KeyValue("physicsspeed", this.kv_physicsSpeed);
+        Variant setPhysicsSpeedVal;
+        setPhysicsSpeedVal.SetFloat(this.kv_physicsSpeed);
+        this.m_pTriggerCatapult.Get().FireInput("SetPhysicsSpeed", setPhysicsSpeedVal, 0, data.activator, data.caller);
     }
 
     [Input("SetLaunchTarget", FIELD_STRING)]
     void SetLaunchTarget( const InputData&in data )
     {
         this.kv_launchTarget = data.value.String();
-        this.m_pTriggerCatapult.Get().KeyValue("launchtarget", this.kv_launchTarget);
+        Variant setLaunchTargetVal;
+        setLaunchTargetVal.SetString(this.kv_launchTarget);
+        this.m_pTriggerCatapult.Get().FireInput("SetLaunchTarget", setLaunchTargetVal, 0, data.activator, data.caller);
     }
 
     [Input("SetExactVelocityChoiceType", FIELD_INTEGER)]
     void SetExactVelocityChoiceType( const InputData&in data )
     {
         this.kv_exactVelocityChoiceType = data.value.Int();
-        this.m_pTriggerCatapult.Get().KeyValue("exactvelocitychoicetype", this.kv_exactVelocityChoiceType );
+        Variant setExactVelocityChoiceTypeVal;
+        setExactVelocityChoiceTypeVal.SetInt(this.kv_exactVelocityChoiceType);
+        this.m_pTriggerCatapult.Get().FireInput("SetExactVelocityChoiceType", setExactVelocityChoiceTypeVal, 0, data.activator, data.caller);
     }
 
     [Input("Catapult", FIELD_INPUT)]
@@ -888,6 +898,7 @@ class CPropFaithPlate : CBaseAnimating
 
         if (this.kv_modelStr == DEFAULT_128MODEL)
         {
+            // TODO-FIXME: SetSequence currently crashes, uncomment once it is fixed!
             //this.SetSequence(this.m_AnimFlingUp);
             return;
         }
