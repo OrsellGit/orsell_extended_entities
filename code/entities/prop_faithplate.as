@@ -1,12 +1,12 @@
 /**
 * @brief   The usual faith plate setup but now made as a entity that can be placed down and just works.
-*! @details WIP DOES NOT PROPERLY WORK!
+*! @details WIP STILL! DOESN'T ANIMATE OR OUTPUT FROM TRIGGER! IN GENERAL THIS CODE IS NOT GREAT AND NEEDS CLEAN UP!
 * @authors Orsell
 *
 * @license Distributed under the MIT license.
 */
 
-#include "../extendedents_core.as"
+#include "../core.as"
 
 ConVar extendedents_debug_plates("extendedents_debug_plates", "0");
 
@@ -257,6 +257,7 @@ void TestFling( const CommandArgs@ args )
 
 // Default faith plate model does not support overgrown states, will need to be changed out by end user.
 const string DEFAULT_MODEL = "models/props/faith_plate.mdl";
+const string DEFAULT_128MODEL = "models/props/faith_plate_128.mdl";
 const string DEFAULT_LAUNCH_SOUND = "Metal_SeafloorCar.BulletImpact";
 const string DEFAULT_TICKING_SOUND = "World.RobotNegInteractPitchedUp";
 
@@ -283,6 +284,29 @@ enum PlateSkins
 [Entity("prop_faithplate")]
 class CPropFaithPlate : CBaseAnimating
 {
+    // ------------------------ ENTITY PRIVATE MEMBERS ------------------------ \\
+
+    // The trigger_catapult that is part of the entity.
+    private EHandle<CBaseTrigger> m_pTriggerCatapult; // TODO: Replace with CTriggerCatapult once exposed.
+
+    // env_sprite entity that is used for the faith plate light on top.
+    private EHandle<CBaseEntity> m_pPlateSprite;
+
+    // Tracking the faith plates current state.
+    private bool m_bFaithPlateState;
+
+    // Future time when the plate will stop being in it's temporary state.
+    private float m_GoalTempTime = 0.0f;
+
+    // Set when the temporary state needs to be interrupted by Enable/Disable inputs
+    private bool m_InterruptTempState = false;
+
+    private int m_AnimFlingIdle = -1; // Cache the idle animation index.
+    private int m_AnimFlingAngled = -1; // Cache the angled animation index.
+    private int m_AnimFlingUp = -1; // Cache the upward animation index.
+    private int m_AnimFlingFastAngled = -1; // Cache the fast angled animation index.
+
+
     // ------------------------ ENTITY KEYVALUE MEMBERS ------------------------ \\
 
     [KeyValue("startDisabled", FIELD_BOOLEAN)]
@@ -300,14 +324,17 @@ class CPropFaithPlate : CBaseAnimating
     [KeyValue("artificialCollision", FIELD_BOOLEAN)]
     private bool kv_artificialCollision; // Vanilla faith plate model comes with no collision by default, so provide artificial collision based on the OBB of the model. If a custom model provides collision, this can be disabled.
 
+    // [KeyValue("faithplate128", FIELD_BOOLEAN)]
+    // private bool kv_faithplate128; // If this is the 128 variant of the faith plate or a faith plate model similar that just has a idle and up animation.
+
     [KeyValue("triggerWidth", FIELD_FLOAT)]
-    private float kv_triggerWidth;
+    private float kv_triggerWidth; // Width size of trigger_catapult.
 
     [KeyValue("triggerDepth", FIELD_FLOAT)]
-    private float kv_triggerDepth;
+    private float kv_triggerDepth; // Depth size of trigger_catapult.
 
     [KeyValue("triggerHeight", FIELD_FLOAT)]
-    private float kv_triggerHeight;
+    private float kv_triggerHeight; // Height size of trigger_catapult.
 
     [KeyValue("triggerPosOffset", FIELD_VECTOR)]
     private Vector kv_triggerPosOffset;
@@ -402,26 +429,7 @@ class CPropFaithPlate : CBaseAnimating
     private COutputInt out_onTempExit;
 
     [Output("OnCatapulted")]
-    private COutputInt out_onCatapulted;
-
-
-    // ------------------------ ENTITY PRIVATE MEMBERS ------------------------ \\
-
-    // The trigger_catapult that is part of the entity.
-    private CBaseTrigger@ triggerCatapult = null; // TODO: Replace with CTriggerCatapult once exposed.
-
-    // env_sprite entity that is used for the faith plate light on top.
-    private CBaseEntity@ plateSprite = null;
-
-    // Tracking the faith plates current state.
-    private bool faithPlateState;
-
-    // Future time when the plate will stop being in it's temporary state.
-    private float goalTempTime = 0.0f;
-
-    // Set when the temporary state needs to be interrupted by Enable/Disable inputs
-    private bool interruptTempState = false;
-
+    private COutputEvent out_onCatapulted;
 
     // ------------------------ ENTITY PRIVATE FUNCTIONS ------------------------ \\
 
@@ -507,10 +515,10 @@ class CPropFaithPlate : CBaseAnimating
 
     /**
     * @brief Used to set the faith plate state.
-    * @param State plate should be put into.
-    * @param Activator that called the input which is setting the faith plate state.
+    * @param enabled State plate should be put into.
+    * @param activator Activator that called the input which is setting the faith plate state.
     */
-    void SetEnable( bool enable, CBaseEntity@ activator = null )
+    void SetEnabled( const bool enabled, CBaseEntity@ activator = null )
     {
         if (@activator == null)
         {
@@ -519,27 +527,33 @@ class CPropFaithPlate : CBaseAnimating
         }
 
         // If in temp state, interrupt it.
-        if (this.goalTempTime != 0.0f)
+        if (this.m_GoalTempTime != 0.0f)
         {
-            this.goalTempTime = util::GetCurrentTime();
-            this.interruptTempState = true;
+            this.m_GoalTempTime = util::GetCurrentTime();
+            this.m_InterruptTempState = true;
             EEPlateLog("SetEnable INTERRUPT!");
         }
 
-        this.faithPlateState = enable;
-        this.triggerCatapult.SetSolid(this.faithPlateState ? ESolidType::SOLID_OBB : ESolidType::SOLID_NONE); // TODO-FIXME: CBaseTrigger Enabled/Disabled wasn't exposed, replace with that when it is.
-        this.SetSkin(this.RetrieveStateSkin(this.faithPlateState));
-        if (this.kv_useNewDisableSkin)
-            this.plateSprite.KeyValue("renderamt", enable ? this.kv_spriteBrightness : "0");
+        this.m_bFaithPlateState = enabled;
+        if (this.m_bFaithPlateState)
+            this.m_pTriggerCatapult.Get().Enable();
         else
+            this.m_pTriggerCatapult.Get().Disable();
+        this.SetSkin(this.RetrieveStateSkin(this.m_bFaithPlateState));
+        if (this.kv_addSprite)
         {
-            // TODO: Remove these to strings once converting Vectors to strings is a thing
-            string offColor = "{} {} {}".format(this.kv_spriteOffColor.x, this.kv_spriteOffColor.y, this.kv_spriteOffColor.z);
-            string onColor = "{} {} {}".format(this.kv_spriteOnColor.x, this.kv_spriteOnColor.y, this.kv_spriteOnColor.z);
-            this.plateSprite.KeyValue("rendercolor", enable ? onColor : offColor);
+            if (this.kv_useNewDisableSkin)
+                this.m_pPlateSprite.Get().KeyValue("renderamt", enabled ? this.kv_spriteBrightness : "0");
+            else
+            {
+                // TODO: Remove these to strings once converting Vectors to strings is a thing
+                string offColor = "{} {} {}".format(this.kv_spriteOffColor.x, this.kv_spriteOffColor.y, this.kv_spriteOffColor.z);
+                string onColor = "{} {} {}".format(this.kv_spriteOnColor.x, this.kv_spriteOnColor.y, this.kv_spriteOnColor.z);
+                this.m_pPlateSprite.Get().KeyValue("rendercolor", enabled ? onColor : offColor);
+            }
         }
 
-        if (enable)
+        if (enabled)
         {
             EEPlateLog("SetEnable ENABLE");
             this.out_onEnabled.Fire(activator, this, 0.0f);
@@ -562,12 +576,12 @@ class CPropFaithPlate : CBaseAnimating
         }
 
         EEPlateLog("SetTempState enableState: {}".format(enableState));
-        this.SetEnable(enableState, activator);
+        this.SetEnabled(enableState, activator);
         // Current time + time to be in temporary state = when temporary state ends. Don't set when tempStateTime is negative for forever temporary state.
         if (this.kv_tempStateTime >= 0.0f)
         {
-            this.goalTempTime = util::GetCurrentTime() + this.kv_tempStateTime;
-            EEPlateLog("SetTempState goalTempTime: {}".format(this.goalTempTime));
+            this.m_GoalTempTime = util::GetCurrentTime() + this.kv_tempStateTime;
+            EEPlateLog("SetTempState goalTempTime: {}".format(this.m_GoalTempTime));
         }
         SetThink(ThinkFunc_t(this.PlateTempStateThink), util::GetCurrentTime(), "CPropFaithPlate::PlateTempStateThink");
 
@@ -601,77 +615,113 @@ class CPropFaithPlate : CBaseAnimating
     void Spawn() override
     {
         // DEBUG
-        EEPlateLog("-----------------------------");
-        EEPlateLog('Spawning prop_faithplate with name: {}'.format(this.GetEntityName()));
-        EEPlateLog('model: {}'.format(this.kv_modelStr));
-        EEPlateLog('overgroundEnabled: {}'.format(this.kv_overgrownEnabled));
-        EEPlateLog('playSounds: {}'.format(this.kv_playSounds));
-        EEPlateLog('launchSound: {}'.format(this.kv_launchSound));
-        EEPlateLog('tickingSound: {}'.format(this.kv_tickingSound));
-        EEPlateLog('tempStateTime: {}'.format(this.kv_tempStateTime));
-        EEPlateLog('startDisabled: {}'.format(this.kv_startDisabled));
-        EEPlateLog("-----------------------------");
+        {
+            EEPlateLog("-----------------------------");
+            EEPlateLog('Spawning prop_faithplate with name: {}'.format(this.GetEntityName()));
+            EEPlateLog('model: {}'.format(this.kv_modelStr));
+            EEPlateLog('overgroundEnabled: {}'.format(this.kv_overgrownEnabled));
+            EEPlateLog('playSounds: {}'.format(this.kv_playSounds));
+            EEPlateLog('launchSound: {}'.format(this.kv_launchSound));
+            EEPlateLog('tickingSound: {}'.format(this.kv_tickingSound));
+            EEPlateLog('tempStateTime: {}'.format(this.kv_tempStateTime));
+            EEPlateLog('startDisabled: {}'.format(this.kv_startDisabled));
+            EEPlateLog("-----------------------------");
+        }
 
         // Precache faith plate assets
         this.Precache();
         CBaseAnimating::Precache();
         CBaseAnimating::Spawn();
 
-        // Setup faith
+        // Setup faith plate model and collision. Those without proper collisions need to rely on their BBOX.
         this.SetModel(this.kv_modelStr);
-        if (this.kv_artificialCollision)
-            this.SetSolid(ESolidType::SOLID_OBB);
+        if (this.kv_artificialCollision && (this.kv_modelStr == DEFAULT_MODEL || this.kv_modelStr == DEFAULT_128MODEL))
+        {
+            this.SetSolid(ESolidType::SOLID_BBOX);
+            Vector newMaxs = this.CollisionProp().GetOBBMaxs();
+            newMaxs.z = 0; // This is assuming that where the origin lies is where the top face of the faith plate is.
+            this.CollisionProp().SetCollisionBounds(this.CollisionProp().GetOBBMins(), newMaxs);
+        }
         else
             this.SetSolid(ESolidType::SOLID_VPHYSICS);
 
-        // TODO: Replace this with separate entity class. Maybe? Might not need to.
-        @this.triggerCatapult = @util::CreateEntityByNameT<CBaseTrigger>("trigger_catapult");
+        IPhysicsObject@ pPhys = @this.VPhysicsInitStatic();
+        if (@pPhys == null)
+        {
+            EELog("Failed to make VPhysics collision for model!", 1);
+            return;
+        }
 
-        //! This is annoying! There has got to be a better way!
-        this.triggerCatapult.AddSpawnFlags(this.GetSpawnFlags());
-        this.triggerCatapult.KeyValue("playerspeed", kv_playerSpeed );
-        this.triggerCatapult.KeyValue("physicsspeed", kv_physicsSpeed );
-        this.triggerCatapult.KeyValue("launchdirection", kv_launchDirection );
-        this.triggerCatapult.KeyValue("launchtarget", kv_launchTarget );
-        this.triggerCatapult.KeyValue("useexactvelocity", kv_useExactVelocity );
-        this.triggerCatapult.KeyValue("exactvelocitychoicetype", kv_exactVelocityChoiceType );
-        this.triggerCatapult.KeyValue("applyangularimpulse", kv_applyAngularImpulse );
-        this.triggerCatapult.KeyValue("airctrlsupressiontime", kv_airCtrlSuppressionTime );
-        this.triggerCatapult.KeyValue("DirectionSuppressAirControl", kv_directionSuppressAirControl );
-        this.triggerCatapult.KeyValue("usethresholdcheck", kv_useThresholdCheck );
-        this.triggerCatapult.KeyValue("onlyvelocitycheck", kv_onlyVelocityCheck );
-        this.triggerCatapult.KeyValue("AbsoluteVelocityCheck", kv_absoluteVelocityCheck );
-        this.triggerCatapult.KeyValue("lowerthreshold", kv_lowerThreshold );
-        this.triggerCatapult.KeyValue("upperthreshold", kv_upperThreshold );
-        this.triggerCatapult.KeyValue("entryangletolerance", kv_entryAngleTolerance );
-        if (this.kv_playSounds)
-            this.triggerCatapult.KeyValue("launchsound", kv_launchSound );
+        if (this.kv_modelStr == DEFAULT_128MODEL)
+        {
+            this.m_AnimFlingIdle = this.LookupSequence("BindPose");
+            this.m_AnimFlingUp = this.LookupSequence(STRAIGHTUP_ANIM);
+        }
         else
-             this.triggerCatapult.KeyValue("launchsound", "" );
+        {
+            this.m_AnimFlingIdle = this.LookupSequence(IDLE_ANIM);
+            this.m_AnimFlingAngled = this.LookupSequence(ANGLED_ANIM);
+            this.m_AnimFlingUp = this.LookupSequence(STRAIGHTUP_ANIM);
+            this.m_AnimFlingFastAngled = this.LookupSequence(FAST_ANGLED_ANIM);
+        }
 
-        this.triggerCatapult.Spawn();
+        // CTriggerCatapult setup
+        {
+            // TODO: Replace this with separate entity class. Maybe? Might not need to.
+            this.m_pTriggerCatapult.Set(util::CreateEntityByNameT<CBaseTrigger>("trigger_catapult"));
+
+            //! This is annoying! There has got to be a better way!
+            this.m_pTriggerCatapult.Get().AddSpawnFlags(this.GetSpawnFlags());
+            this.m_pTriggerCatapult.Get().KeyValue("playerspeed", this.kv_playerSpeed );
+            this.m_pTriggerCatapult.Get().KeyValue("physicsspeed", this.kv_physicsSpeed );
+            this.m_pTriggerCatapult.Get().KeyValue("launchdirection", this.kv_launchDirection );
+            this.m_pTriggerCatapult.Get().KeyValue("launchtarget", this.kv_launchTarget );
+            this.m_pTriggerCatapult.Get().KeyValue("useexactvelocity", this.kv_useExactVelocity );
+            this.m_pTriggerCatapult.Get().KeyValue("exactvelocitychoicetype", this.kv_exactVelocityChoiceType );
+            this.m_pTriggerCatapult.Get().KeyValue("applyangularimpulse", this.kv_applyAngularImpulse );
+            this.m_pTriggerCatapult.Get().KeyValue("airctrlsupressiontime", this.kv_airCtrlSuppressionTime );
+            this.m_pTriggerCatapult.Get().KeyValue("DirectionSuppressAirControl", this.kv_directionSuppressAirControl );
+            this.m_pTriggerCatapult.Get().KeyValue("usethresholdcheck", this.kv_useThresholdCheck );
+            this.m_pTriggerCatapult.Get().KeyValue("onlyvelocitycheck", this.kv_onlyVelocityCheck );
+            this.m_pTriggerCatapult.Get().KeyValue("AbsoluteVelocityCheck", this.kv_absoluteVelocityCheck );
+            this.m_pTriggerCatapult.Get().KeyValue("lowerthreshold", this.kv_lowerThreshold );
+            this.m_pTriggerCatapult.Get().KeyValue("upperthreshold", this.kv_upperThreshold );
+            this.m_pTriggerCatapult.Get().KeyValue("entryangletolerance", this.kv_entryAngleTolerance );
+            if (this.kv_playSounds)
+                this.m_pTriggerCatapult.Get().KeyValue("launchsound", this.kv_launchSound );
+            else
+                this.m_pTriggerCatapult.Get().KeyValue("launchsound", "" );
+
+            this.m_pTriggerCatapult.Get().KeyValue("OnCatapulted", "{},Catapult,,0,-1".format(this.GetEntityName()));
+
+            this.m_pTriggerCatapult.Get().Spawn();
+            this.m_pTriggerCatapult.Get().Activate();
+        }
 
         // DEBUG
-        EEPlateLog("-----------------------------");
-        EEPlateLog('playerspeed: {}'.format(this.kv_playerSpeed));
-        EEPlateLog('launchdirection: {} {} {}'.format(this.kv_launchDirection.x, this.kv_launchDirection.y, this.kv_launchDirection.z));
-        EEPlateLog('launchtarget: {}'.format(this.kv_launchTarget));
-        EEPlateLog('tempStateTime: {}'.format(this.kv_tempStateTime));
-        EEPlateLog('startDisabled: {}'.format(this.kv_startDisabled));
-        EEPlateLog('launchsound: {}'.format(this.kv_launchSound));
-        EEPlateLog("-----------------------------");
+        {
+            EEPlateLog("-----------------------------");
+            EEPlateLog('playerspeed: {}'.format(this.kv_playerSpeed));
+            EEPlateLog('launchdirection: {} {} {}'.format(this.kv_launchDirection.x, this.kv_launchDirection.y, this.kv_launchDirection.z));
+            EEPlateLog('launchtarget: {}'.format(this.kv_launchTarget));
+            EEPlateLog('tempStateTime: {}'.format(this.kv_tempStateTime));
+            EEPlateLog('startDisabled: {}'.format(this.kv_startDisabled));
+            EEPlateLog('launchsound: {}'.format(this.kv_launchSound));
+            EEPlateLog("-----------------------------");
+        }
+
 
         // Set trigger size using the three KVs, cursed and a tad annoying.
         Vector sizeVector, sizeVectorNegated;
         sizeVectorNegated = sizeVector = Vector(this.kv_triggerWidth, this.kv_triggerDepth, this.kv_triggerHeight) / 2;
         sizeVectorNegated.Negate();
-        this.triggerCatapult.SetCollisionBounds(sizeVectorNegated, sizeVector);
-        this.triggerCatapult.SetMoveType(EMoveType::MOVETYPE_NONE);
-        this.triggerCatapult.SetSolid(ESolidType::SOLID_OBB);
-        this.triggerCatapult.SetParent(this);
+        this.m_pTriggerCatapult.Get().SetCollisionBounds(sizeVectorNegated, sizeVector);
+        this.m_pTriggerCatapult.Get().SetMoveType(EMoveType::MOVETYPE_NONE);
+        this.m_pTriggerCatapult.Get().SetSolid(ESolidType::SOLID_OBB); // Solidity needs to be based on the OBB because it won't have a model packed in by VBSP.
+        this.m_pTriggerCatapult.Get().SetParent(this);
 
-        this.triggerCatapult.SetAbsOrigin(this.GetAbsOrigin() + this.kv_triggerPosOffset);
-        this.triggerCatapult.SetAbsAngles(this.GetAbsAngles());
+        this.m_pTriggerCatapult.Get().SetAbsOrigin(this.GetAbsOrigin() + this.kv_triggerPosOffset);
+        this.m_pTriggerCatapult.Get().SetAbsAngles(this.GetAbsAngles());
 
         if (this.kv_addSprite)
         {
@@ -679,24 +729,27 @@ class CPropFaithPlate : CBaseAnimating
             string offColor = "{} {} {}".format(this.kv_spriteOffColor.x, this.kv_spriteOffColor.y, this.kv_spriteOffColor.z);
             string onColor = "{} {} {}".format(this.kv_spriteOnColor.x, this.kv_spriteOnColor.y, this.kv_spriteOnColor.z);
             // TODO: Change to CSprite once it is exposed.
-            @this.plateSprite = util::CreateEntityByNameT<CBaseEntity>("env_sprite");
-            this.plateSprite.KeyValue("rendercolor", this.kv_startDisabled ? offColor : onColor);
-            this.plateSprite.KeyValue("renderamt", this.kv_spriteBrightness);
-            this.plateSprite.KeyValue("rendermode", "9");
-            this.plateSprite.KeyValue("model", "sprites/light_glow02.vmt");
-            this.plateSprite.KeyValue("scale", "0.7");
-            this.plateSprite.KeyValue("GlowProxySize", "5");
-            this.plateSprite.KeyValue("HDRColorScale", "1.0");
-            this.plateSprite.KeyValue("spawnflags", !this.kv_startDisabled);
-            this.plateSprite.Spawn();
-            this.plateSprite.SetParent(this);
-            this.plateSprite.SetParentAttachment("light");
+            this.m_pPlateSprite.Set(util::CreateEntityByNameT<CBaseEntity>("env_sprite"));
+            this.m_pPlateSprite.Get().KeyValue("rendercolor", this.kv_startDisabled ? offColor : onColor);
+            this.m_pPlateSprite.Get().KeyValue("renderamt", this.kv_spriteBrightness);
+            this.m_pPlateSprite.Get().KeyValue("rendermode", "9");
+            this.m_pPlateSprite.Get().KeyValue("model", "sprites/light_glow02.vmt");
+            this.m_pPlateSprite.Get().KeyValue("scale", "0.7");
+            this.m_pPlateSprite.Get().KeyValue("GlowProxySize", "5");
+            this.m_pPlateSprite.Get().KeyValue("HDRColorScale", "1.0");
+            this.m_pPlateSprite.Get().KeyValue("spawnflags", !this.kv_startDisabled);
+            this.m_pPlateSprite.Get().Spawn();
+            this.m_pTriggerCatapult.Get().Activate();
+            this.m_pPlateSprite.Get().SetParent(this);
+            this.m_pPlateSprite.Get().SetParentAttachment("light");
         }
 
-        this.faithPlateState = !this.kv_startDisabled;
-        this.SetSkin(RetrieveStateSkin(this.faithPlateState));
-        // TODO-FIXME: CBaseTrigger Enabled/Disabled wasn't exposed, replace with that when it is.
-        this.triggerCatapult.SetSolid(this.faithPlateState ? ESolidType::SOLID_OBB : ESolidType::SOLID_NONE); // Solidity needs to be based on the OBB because it won't have a model packed in by VBSP.
+        this.m_bFaithPlateState = !this.kv_startDisabled;
+        this.SetSkin(RetrieveStateSkin(this.m_bFaithPlateState));
+        if (this.m_bFaithPlateState)
+            this.m_pTriggerCatapult.Get().Enable();
+        else
+            this.m_pTriggerCatapult.Get().Disable();
     }
 
     /**
@@ -706,40 +759,43 @@ class CPropFaithPlate : CBaseAnimating
     {
         EEPlateLog("-------------");
         EEPlateLog("TEST THINKKKK");
-        EEPlateLog("goalTempTime: {}".format(this.goalTempTime));
-        EEPlateLog("interruptTempState: {}".format(this.interruptTempState));
+        EEPlateLog("goalTempTime: {}".format(this.m_GoalTempTime));
+        EEPlateLog("interruptTempState: {}".format(this.m_InterruptTempState));
         EEPlateLog("GetCurrentTime: {}".format(util::GetCurrentTime()));
-        EEPlateLog("this.goalTempTime <= util::GetCurrentTime(): {}".format(this.goalTempTime <= util::GetCurrentTime()));
+        EEPlateLog("this.goalTempTime <= util::GetCurrentTime(): {}".format(this.m_GoalTempTime <= util::GetCurrentTime()));
         EEPlateLog("-------------");
 
         // End state when goal time has passed. Do not exit when goal is negative as that is used for temp states which go on forever.
-        if ((this.goalTempTime <= util::GetCurrentTime()) && kv_tempStateTime > 0.0f || this.interruptTempState)
+        if ((this.m_GoalTempTime <= util::GetCurrentTime()) && kv_tempStateTime > 0.0f || this.m_InterruptTempState)
         {
             SetNextThink(-1, "CPropFaithPlate::PlateTempStateThink");
-            this.goalTempTime = 0.0f;
+            this.m_GoalTempTime = 0.0f;
 
-            if (!this.interruptTempState)
-                this.SetEnable(!this.faithPlateState);
+            if (!this.m_InterruptTempState)
+                this.SetEnabled(!this.m_bFaithPlateState);
 
-            this.interruptTempState = false;
-            this.out_onTempExit.Fire(this.faithPlateState ? 1 : 0, this, this);
+            this.m_InterruptTempState = false;
+            this.out_onTempExit.Fire(this.m_bFaithPlateState ? 1 : 0, this, this);
             return;
         }
 
         // Switch between on and off skin states. Blinks every TEMP_STATE_BLINK_INTERVAL seconds.
         bool blinkOn = (int(util::GetCurrentTime() / TEMP_STATE_BLINK_INTERVAL) % 2) == 0;
         if (!blinkOn)
-            this.EmitSound(kv_tickingSound);
+            this.EmitSound(this.kv_tickingSound);
 
         this.SetSkin(this.RetrieveStateSkin(blinkOn));
-        if (this.kv_useNewDisableSkin)
-            this.plateSprite.KeyValue("renderamt", blinkOn ? this.kv_spriteBrightness : "0");
-        else
+        if (this.kv_addSprite)
         {
-            // TODO: Remove these to strings once converting Vectors to strings is a thing
-            string offColor = "{} {} {}".format(this.kv_spriteOffColor.x, this.kv_spriteOffColor.y, this.kv_spriteOffColor.z);
-            string onColor = "{} {} {}".format(this.kv_spriteOnColor.x, this.kv_spriteOnColor.y, this.kv_spriteOnColor.z);
-            this.plateSprite.KeyValue("rendercolor", blinkOn ? onColor : offColor);
+            if (this.kv_useNewDisableSkin)
+                this.m_pPlateSprite.Get().KeyValue("renderamt", blinkOn ? this.kv_spriteBrightness : "0");
+            else
+            {
+                // TODO: Remove these to strings once converting Vectors to strings is a thing
+                string offColor = "{} {} {}".format(this.kv_spriteOffColor.x, this.kv_spriteOffColor.y, this.kv_spriteOffColor.z);
+                string onColor = "{} {} {}".format(this.kv_spriteOnColor.x, this.kv_spriteOnColor.y, this.kv_spriteOnColor.z);
+                this.m_pPlateSprite.Get().KeyValue("rendercolor", blinkOn ? onColor : offColor);
+            }
         }
 
         SetNextThink(util::GetCurrentTime() + TEMP_STATE_BLINK_INTERVAL, "CPropFaithPlate::PlateTempStateThink");
@@ -752,20 +808,20 @@ class CPropFaithPlate : CBaseAnimating
     [Input("Enable", FIELD_INPUT)]
     void Enable( const InputData&in data )
     {
-        this.SetEnable(true, data.activator);
+        this.SetEnabled(true, data.activator);
     }
 
     [Input("Disable", FIELD_INPUT)]
     void Disable( const InputData&in data )
     {
-        this.SetEnable(false, data.activator);
+        this.SetEnabled(false, data.activator);
     }
 
     [Input("Toggle", FIELD_INPUT)]
     void Toggle( const InputData&in data )
     {
-        this.faithPlateState = !this.faithPlateState;
-        this.SetEnable(this.faithPlateState, data.activator);
+        this.m_bFaithPlateState = !this.m_bFaithPlateState;
+        this.SetEnabled(this.m_bFaithPlateState, data.activator);
     }
 
     [Input("TempOn", FIELD_INPUT)]
@@ -785,7 +841,7 @@ class CPropFaithPlate : CBaseAnimating
     [Input("GetEnabled", FIELD_INPUT)]
     void GetEnabled( const InputData&in data )
     {
-        this.out_onGetEnabled.Fire(this.faithPlateState ? 1 : 0, data.activator, this);
+        this.out_onGetEnabled.Fire(this.m_bFaithPlateState ? 1 : 0, data.activator, this);
     }
 
     [Input("SetTempStateTime", FIELD_INPUT)]
@@ -801,23 +857,42 @@ class CPropFaithPlate : CBaseAnimating
     void SetPlayerSpeed( const InputData&in data )
     {
         this.kv_playerSpeed = data.value.Float();
+        this.m_pTriggerCatapult.Get().KeyValue("playerspeed", this.kv_playerSpeed);
     }
 
     [Input("SetPhysicsSpeed", FIELD_FLOAT)]
     void SetPhysicsSpeed( const InputData&in data )
     {
         this.kv_physicsSpeed = data.value.Float();
+        this.m_pTriggerCatapult.Get().KeyValue("physicsspeed", this.kv_physicsSpeed);
     }
 
     [Input("SetLaunchTarget", FIELD_STRING)]
     void SetLaunchTarget( const InputData&in data )
     {
         this.kv_launchTarget = data.value.String();
+        this.m_pTriggerCatapult.Get().KeyValue("launchtarget", this.kv_launchTarget);
     }
 
     [Input("SetExactVelocityChoiceType", FIELD_INTEGER)]
     void SetExactVelocityChoiceType( const InputData&in data )
     {
         this.kv_exactVelocityChoiceType = data.value.Int();
+        this.m_pTriggerCatapult.Get().KeyValue("exactvelocitychoicetype", this.kv_exactVelocityChoiceType );
+    }
+
+    [Input("Catapult", FIELD_INPUT)]
+    void InputCatapult( const InputData&in data )
+    {
+        this.out_onCatapulted.Fire(data.activator, this, 0);
+
+        if (this.kv_modelStr == DEFAULT_128MODEL)
+        {
+            //this.SetSequence(this.m_AnimFlingUp);
+            return;
+        }
+
+        // TODO: Calculate launch angle to determine which animation to play.
+        //this.SetSequence()
     }
 }

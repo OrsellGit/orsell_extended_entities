@@ -11,6 +11,18 @@
 [
 	sep1(string) readonly : "----------------------------------------------------------------------------------------------------------"
 
+	spawnflags(flags) = [
+		1: "[1] Clients/Players" : 1
+		2: "[2] NPCs" : 0
+		8: "[8] Physics Objects" : 1
+		16: "[16] Only player ally NPCs" : 0
+		32: "[32] Only clients in vehicles" : 0
+		64: "[64] Everything (not including physics debris)" : 0
+		512: "[512] Only clients *not* in vehicles" : 0
+		1024: "[1024] Physics debris" : 0
+		2048: "[2048] Only NPCs in vehicles (respects player ally flag)" : 0
+	]
+
 	// KeyValues
 	startDisabled(boolean) : "Start Disabled" : 0 : "Should the faith plate start disabled."
 
@@ -35,7 +47,7 @@
 	launchSound(sound) : "Launch Sound" : "Metal_SeafloorCar.BulletImpact" : "Sound the faith plate should make when launching objects."
 	tickingSound(sound) : "Beeping Sound" : "World.RobotNegInteractPitchedUp" : "Sound the faith plate should make when in the temporary on/off state."
 
-	tempStateTime(float) : "Temporary On/Off Time" : 0 : "How long should the temporary on/off inputs cause the plate to be put into the temporary state. Negative values will tell it to go on infinitely."
+	tempStateTime(float) : "Temporary On/Off Time" : 5 : "How long should the temporary on/off inputs cause the plate to be put into the temporary state. Negative values will tell it to go on infinitely."
 
 	// Inputs
 	input Enable(void) : "Enable the faith plate, sets the skin that represents it's on state."

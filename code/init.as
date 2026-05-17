@@ -6,11 +6,16 @@
 * @license Distributed under the MIT license.
 */
 
+[LevelInitPreEntity]
+void OnLevelInitPreEntity()
+{
+    Msgl("LOADING OEE!");
+}
 
 // TODO: Properly separate out things that should just be on the client like debug vs stuff on the server like entities.
 #if SERVER
 
-#include "extendedent_debug.as"
+#include "debug.as"
 
 #include "entities/prop_faithplate.as"
 

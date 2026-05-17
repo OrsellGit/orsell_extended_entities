@@ -6,7 +6,7 @@
 * @license Distributed under the MIT license.
 */
 
-#include "extendedents_core.as"
+#include "core.as"
 
 [ServerCommand("extendedents_triggers_getsizes", "")]
 void GetTriggerSize( const CommandArgs@ args )
