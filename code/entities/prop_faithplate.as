@@ -206,12 +206,12 @@ void TestFling( const CommandArgs@ args )
     //     return;
     // }
 
-    CPropFaithPlate@ plate = cast<CPropFaithPlate>(EntityList().FindByName(null, "faithplate_ent"));
+    CPropFaithPlate@ plate = cast<CPropFaithPlate>(EntityList().FindByClassname(null, "prop_faithplate"));
 
     //Vector vectorLaunch = CalculateLaunchVector( EntityList().FindByName(null, "player"), EntityList().FindByName(null, "faithplate_ent_testtarget"));
     //EEPlateLog('vectorLaunch: {} {} {}'.format(vectorLaunch.x, vectorLaunch.y, vectorLaunch.z));
     //Msgl("Fling anim: {}".format(GetFlingAnimation()));
-    plate.SetSequence(plate.LookupSequence(ANGLED_ANIM));
+    plate.SetSequence(plate.LookupSequence(STRAIGHTUP_ANIM));
 
     // for (CBaseEntity@ ent = null; (@ent = EntityList().FindByClassname(ent, "prop_faithplate")) != null;)
     // {
