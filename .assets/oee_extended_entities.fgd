@@ -31,6 +31,7 @@
 	overgrownEnabled(boolean) : "Use Overgrown Model" : 0 : "If the overgrown skins of the faith plate model should be used. Leave 0 if the model doesn't have overgrown skins."
 	useNewDisableSkin(boolean) : "Use New Disabled Faith Plate Skin" : 0 : "Len's EverythingPBR faith plate model comes with a off light skin along with the usual blue and orange. Should this off skin be used instead the orange skin?"
 	artificialCollision(boolean) : "Provide Artificial Collision" : 1 : "The vanilla faith plate model doesn't come with any collision. However, custom models can provide this collision.\nIf a model with custom collision is selected, disable this so collision based on the OBB is not provided so the model can take over with its own."
+	faithplate128(boolean) : "Faith Plate 128 Style" : 0 : "If this is the 128 variant of the faith plate or a faith plate model similar that just has a idle and up animation."
 
 	triggerWidth(float) : "Trigger Width" : 60 : "The width of the trigger along the x-axis/red axis."
 	triggerDepth(float) : "Trigger Depth" : 25 : "The depth of the trigger along the y-axis/green axis."
@@ -43,9 +44,11 @@
 	spriteOffColor(color255) : "Light Sprite Off Color" : "255 144 0" : "Color of the faith plate sprite when the faith plate is OFF. NOTE: Sprite will be turned off instead of using this color when 'Use New Disabled Faith Plate Skin' is enabled."
 	spriteBrightness(integer) : "Light Sprite Brightness" : 150 : "Brightness of the faith plate sprite."
 
-	playSounds(boolean): "Play Launch Sounds" : 0 : "Some models, like the BEE faith plate model, have sounds programmed into their QCs. If the model you're using has no sounds, you can enable this to have them played for you."
+	playSounds(boolean): "Play Launch Sounds" : 1 : "Some models, like the BEEMod faith plate model, have sounds programmed into their QCs. If the model you're using has sounds, you should disable this to have the model play them for you."
 	launchSound(sound) : "Launch Sound" : "Metal_SeafloorCar.BulletImpact" : "Sound the faith plate should make when launching objects."
 	tickingSound(sound) : "Beeping Sound" : "World.RobotNegInteractPitchedUp" : "Sound the faith plate should make when in the temporary on/off state."
+	launchMusicTrackPlayer(sound) : "Launch Music Track Player" : "" : "Optional sound or loop music track that played when player is catapulted."
+	launchMusicTrackPhysics(sound) : "Launch Music Track Physics" : "" : "Optional sound or loop music track that played when physics object that isn't the player is catapulted."
 
 	tempStateTime(float) : "Temporary On/Off Time" : 5 : "How long should the temporary on/off inputs cause the plate to be put into the temporary state. Negative values will tell it to go on infinitely."
 
@@ -64,4 +67,5 @@
 	output OnDisable(void) : "Faith plate was disabled."
 	output OnTempStateEnter(integer) : "When the plate enters temporary state. Returns if temporary state called is on or off."
 	output OnTempStateExit(integer) : "When the plate exits temporary state. Returns if temporary state called is on or off."
+	output OnCatapultedPlayer(void) : "Called when a player is catapulted."
 ]
