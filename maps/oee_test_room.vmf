@@ -2,8 +2,8 @@ versioninfo
 {
 	"editorextension" "strata"
 	"editorversion" "400"
-	"editorbuild" "10628"
-	"mapversion" "59"
+	"editorbuild" "10825"
+	"mapversion" "77"
 	"formatversion" "100"
 	"prefab" "0"
 }
@@ -15,7 +15,7 @@ viewsettings
 	"bSnapToGrid" "1"
 	"bShowGrid" "1"
 	"bShowLogicalGrid" "1"
-	"nGridSpacing" "512"
+	"nGridSpacing" "16"
 	"bShow3DGrid" "0"
 	"nInstanceVisibility" "2"
 	views
@@ -23,25 +23,25 @@ viewsettings
 		v0
 		{
 			"3d" "1"
-			"position" "(-793.495 -167.365 130.669)"
-			"angle" "[28 17.2001 0]"
+			"position" "(14.534 -499.468 398.505)"
+			"angle" "[14.8 142.8 0]"
 		}
 		v1
 		{
 			"3d" "0"
-			"position" "(1042.01 1039.91 65536)"
+			"position" "(1042.01 1039.91 0)"
 			"zoom" "3.85176"
 		}
 		v2
 		{
 			"3d" "0"
-			"position" "(65536 55.1178 -205.504)"
+			"position" "(0 55.1178 -205.504)"
 			"zoom" "3.20979"
 		}
 		v3
 		{
 			"3d" "0"
-			"position" "(1709.97 -65536 -158.984)"
+			"position" "(1709.97 0 -158.984)"
 			"zoom" "0.137179"
 		}
 	}
@@ -49,7 +49,7 @@ viewsettings
 world
 {
 	"id" "1"
-	"mapversion" "59"
+	"mapversion" "77"
 	"classname" "worldspawn"
 	"detailmaterial" "detail/detailsprites"
 	"detailvbsp" "detail.vbsp"
@@ -2309,6 +2309,212 @@ world
 }
 entity
 {
+	"id" "2610"
+	"classname" "point_worldtext"
+	"angles" "-2.23118e-05 -180 -1.01778e-12"
+	"color" "255 255 255"
+	"font" "editor/worldtext"
+	"message" "NOTE: 128 Faith Plate variant does not have a disabled skin"
+	"spawnflags" "0"
+	"textsize" "10"
+	"origin" "-848 -80 -144"
+	editor
+	{
+		"color" "220 30 220"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 4500]"
+	}
+}
+entity
+{
+	"id" "2724"
+	"classname" "info_player_start"
+	"angles" "0 90 0"
+	"spawnflags" "0"
+	"targetname" "<pack_rename>"
+	"origin" "-440.809 -489.245 -192"
+	editor
+	{
+		"color" "0 255 0"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 6000]"
+	}
+}
+entity
+{
+	"id" "2772"
+	"classname" "point_worldtext"
+	"angles" "-2.23118e-05 -180 -1.01778e-12"
+	"color" "255 255 255"
+	"font" "editor/worldtext"
+	"message" "* Set custom launch music tracks for player and objects."
+	"spawnflags" "0"
+	"textsize" "10"
+	"origin" "-816 -336 -16"
+	editor
+	{
+		"color" "220 30 220"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 4500]"
+	}
+}
+entity
+{
+	"id" "2774"
+	"classname" "point_worldtext"
+	"angles" "-2.23118e-05 -180 -1.01778e-12"
+	"color" "255 255 255"
+	"font" "editor/worldtext"
+	"message" "* Custom inputs to temporary enable and disable the Faith Plate."
+	"spawnflags" "0"
+	"textsize" "10"
+	"origin" "-816 -336 -32"
+	editor
+	{
+		"color" "220 30 220"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 4500]"
+	}
+}
+entity
+{
+	"id" "2776"
+	"classname" "point_worldtext"
+	"angles" "-2.23118e-05 -180 -1.01778e-12"
+	"color" "255 255 255"
+	"font" "editor/worldtext"
+	"message" "* Support for Len's EverythingPBR and other Faith Plate models."
+	"spawnflags" "0"
+	"textsize" "10"
+	"origin" "-816 -336 0"
+	editor
+	{
+		"color" "220 30 220"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 4500]"
+	}
+}
+entity
+{
+	"id" "2778"
+	"classname" "point_worldtext"
+	"angles" "-2.23118e-05 -180 -1.01778e-12"
+	"color" "255 255 255"
+	"font" "editor/worldtext"
+	"message" "trigger Faith Plate setup."
+	"spawnflags" "0"
+	"textsize" "10"
+	"origin" "-816 -336 16"
+	editor
+	{
+		"color" "220 30 220"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 4500]"
+	}
+}
+entity
+{
+	"id" "2780"
+	"classname" "point_worldtext"
+	"angles" "-2.23118e-05 -180 -1.01778e-12"
+	"color" "255 255 255"
+	"font" "editor/worldtext"
+	"message" "prop_faithplate: Entity alternative to the usual model, clip, and"
+	"spawnflags" "0"
+	"textsize" "10"
+	"origin" "-816 -336 32"
+	editor
+	{
+		"color" "220 30 220"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 4500]"
+	}
+}
+entity
+{
+	"id" "2857"
+	"classname" "point_worldtext"
+	"angles" "-2.23118e-05 180 -1.01778e-12"
+	"color" "255 255 255"
+	"font" "editor/worldtext"
+	"message" "* Other QoL features to make using Faith Plates easier and customizable."
+	"spawnflags" "0"
+	"textsize" "10"
+	"origin" "-816 -336 -64"
+	editor
+	{
+		"color" "220 30 220"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 4500]"
+	}
+}
+entity
+{
+	"id" "2954"
+	"classname" "point_worldtext"
+	"angles" "-2.23118e-05 -180 -1.01778e-12"
+	"color" "255 255 255"
+	"font" "editor/worldtext"
+	"message" "NOTE: BEEMod models are recommended. They have overgrown and disabled variants."
+	"spawnflags" "0"
+	"textsize" "10"
+	"origin" "-816 -336 -80"
+	editor
+	{
+		"color" "220 30 220"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 4500]"
+	}
+}
+entity
+{
+	"id" "2976"
+	"classname" "point_worldtext"
+	"angles" "-2.23118e-05 180 -1.01778e-12"
+	"color" "255 255 255"
+	"font" "editor/worldtext"
+	"message" "Below are the standard Portal 2 models."
+	"spawnflags" "0"
+	"textsize" "10"
+	"origin" "-816 -336 -96"
+	editor
+	{
+		"color" "220 30 220"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 4500]"
+	}
+}
+entity
+{
+	"id" "3058"
+	"classname" "point_worldtext"
+	"angles" "-2.23118e-05 180 -1.01778e-12"
+	"color" "255 255 255"
+	"font" "editor/worldtext"
+	"message" "* Automatically plays fling animation based on launch angle."
+	"spawnflags" "0"
+	"textsize" "10"
+	"origin" "-816 -336 -48"
+	editor
+	{
+		"color" "220 30 220"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 4500]"
+	}
+}
+entity
+{
 	"id" "2200"
 	"classname" "prop_faithplate"
 	"AbsoluteVelocityCheck" "0"
@@ -2335,7 +2541,7 @@ entity
 	"lowerthreshold" "0.15"
 	"model" "models/props/faith_plate.mdl"
 	"onlyvelocitycheck" "0"
-	"origin" "-576 448 -128"
+	"origin" "-672 368 -176"
 	"overgrownEnabled" "0"
 	"parentname" "oee_faithplate3_rot"
 	"physicsspeed" "100"
@@ -2389,7 +2595,7 @@ entity
 	"effects" "0"
 	"fanfriction" "20"
 	"maxspeed" "100"
-	"origin" "-576 448 -168.9"
+	"origin" "-672 368 -184.9"
 	"renderamt" "255"
 	"rendercolor" "255 255 255"
 	"renderfx" "0"
@@ -2408,14 +2614,14 @@ entity
 		side
 		{
 			"id" "246"
-			"plane" "(-640 512 -161.806) (-512 512 -161.806) (-512 384 -161.806)"
+			"plane" "(-736 432 -177.806) (-608 432 -177.806) (-608 304 -177.806)"
 			point_data
 			{
 				"numpts" "4"
-				"point" "0 -640 512 -161.806"
-				"point" "1 -512 512 -161.806"
-				"point" "2 -512 384 -161.806"
-				"point" "3 -640 384 -161.806"
+				"point" "0 -736 432 -177.806"
+				"point" "1 -608 432 -177.806"
+				"point" "2 -608 304 -177.806"
+				"point" "3 -736 304 -177.806"
 			}
 			"material" "TOOLS/TOOLSINVISIBLE"
 			"uaxis" "[1 0 0 0] 0.25"
@@ -2427,14 +2633,14 @@ entity
 		side
 		{
 			"id" "245"
-			"plane" "(-640 384 -176) (-512 384 -176) (-512 512 -176)"
+			"plane" "(-736 304 -192) (-608 304 -192) (-608 432 -192)"
 			point_data
 			{
 				"numpts" "4"
-				"point" "0 -640 384 -176"
-				"point" "1 -512 384 -176"
-				"point" "2 -512 512 -176"
-				"point" "3 -640 512 -176"
+				"point" "0 -736 304 -192"
+				"point" "1 -608 304 -192"
+				"point" "2 -608 432 -192"
+				"point" "3 -736 432 -192"
 			}
 			"material" "TOOLS/TOOLSINVISIBLE"
 			"uaxis" "[1 0 0 0] 0.25"
@@ -2446,14 +2652,14 @@ entity
 		side
 		{
 			"id" "244"
-			"plane" "(-640 512 -161.806) (-640 384 -161.806) (-640 384 -176)"
+			"plane" "(-736 432 -177.806) (-736 304 -177.806) (-736 304 -192)"
 			point_data
 			{
 				"numpts" "4"
-				"point" "0 -640 512 -161.806"
-				"point" "1 -640 384 -161.806"
-				"point" "2 -640 384 -176"
-				"point" "3 -640 512 -176"
+				"point" "0 -736 432 -177.806"
+				"point" "1 -736 304 -177.806"
+				"point" "2 -736 304 -192"
+				"point" "3 -736 432 -192"
 			}
 			"material" "TOOLS/TOOLSINVISIBLE"
 			"uaxis" "[0 1 0 0] 0.25"
@@ -2465,14 +2671,14 @@ entity
 		side
 		{
 			"id" "243"
-			"plane" "(-512 512 -176) (-512 384 -176) (-512 384 -161.806)"
+			"plane" "(-608 432 -192) (-608 304 -192) (-608 304 -177.806)"
 			point_data
 			{
 				"numpts" "4"
-				"point" "0 -512 512 -176"
-				"point" "1 -512 384 -176"
-				"point" "2 -512 384 -161.806"
-				"point" "3 -512 512 -161.806"
+				"point" "0 -608 432 -192"
+				"point" "1 -608 304 -192"
+				"point" "2 -608 304 -177.806"
+				"point" "3 -608 432 -177.806"
 			}
 			"material" "TOOLS/TOOLSINVISIBLE"
 			"uaxis" "[0 1 0 0] 0.25"
@@ -2484,14 +2690,14 @@ entity
 		side
 		{
 			"id" "242"
-			"plane" "(-512 512 -161.806) (-640 512 -161.806) (-640 512 -176)"
+			"plane" "(-608 432 -177.806) (-736 432 -177.806) (-736 432 -192)"
 			point_data
 			{
 				"numpts" "4"
-				"point" "0 -512 512 -161.806"
-				"point" "1 -640 512 -161.806"
-				"point" "2 -640 512 -176"
-				"point" "3 -512 512 -176"
+				"point" "0 -608 432 -177.806"
+				"point" "1 -736 432 -177.806"
+				"point" "2 -736 432 -192"
+				"point" "3 -608 432 -192"
 			}
 			"material" "TOOLS/TOOLSINVISIBLE"
 			"uaxis" "[1 0 0 0] 0.25"
@@ -2503,14 +2709,14 @@ entity
 		side
 		{
 			"id" "241"
-			"plane" "(-512 384 -176) (-640 384 -176) (-640 384 -161.806)"
+			"plane" "(-608 304 -192) (-736 304 -192) (-736 304 -177.806)"
 			point_data
 			{
 				"numpts" "4"
-				"point" "0 -512 384 -176"
-				"point" "1 -640 384 -176"
-				"point" "2 -640 384 -161.806"
-				"point" "3 -512 384 -161.806"
+				"point" "0 -608 304 -192"
+				"point" "1 -736 304 -192"
+				"point" "2 -736 304 -177.806"
+				"point" "3 -608 304 -177.806"
 			}
 			"material" "TOOLS/TOOLSINVISIBLE"
 			"uaxis" "[1 0 0 0] 0.25"
@@ -2542,7 +2748,7 @@ entity
 	"parentname" "oee_faithplate3"
 	"spawnflags" "0"
 	"targetname" "oee_faithplate3_target"
-	"origin" "-384 448 -183"
+	"origin" "-480 368 -183"
 	editor
 	{
 		"color" "220 30 220"
@@ -2727,7 +2933,6 @@ entity
 	"font" "editor/worldtext"
 	"message" "Switch To Far Target"
 	"spawnflags" "0"
-	"targetname" "<pack_rename>"
 	"textsize" "10"
 	"origin" "-720 -352 -16"
 	editor
@@ -2786,7 +2991,6 @@ entity
 	"font" "editor/worldtext"
 	"message" "Switch To Above"
 	"spawnflags" "0"
-	"targetname" "<pack_rename>"
 	"textsize" "10"
 	"origin" "-720 -384 -48"
 	editor
@@ -2935,7 +3139,7 @@ entity
 	"applyangularimpulse" "1"
 	"artificialCollision" "1"
 	"body" "0"
-	"DirectionSuppressAirControl" "0"
+	"DirectionSuppressAirControl" "1"
 	"disableflashlight" "0"
 	"disablereceiveshadows" "0"
 	"disableshadowdepth" "0"
@@ -2946,16 +3150,18 @@ entity
 	"exactvelocitychoicetype" "0"
 	"fadescale" "1"
 	"launchdirection" "0 0 0"
+	"launchMusicTrackPhysics" "music/sp_a3_bomb_flings_c2.wav"
+	"launchMusicTrackPlayer" "music/sp_a2_trust_fling_b1.wav"
 	"launchSound" "Metal_SeafloorCar.BulletImpact"
 	"launchtarget" "oee_faithplate_targetfar"
 	"lowerthreshold" "0.15"
-	"model" "models/pbr/test_chambers/l2_faithplate.mdl"
+	"model" "models/props/faith_plate.mdl"
 	"onlyvelocitycheck" "0"
 	"origin" "-784 -224 -192"
 	"overgrownEnabled" "0"
 	"physicsspeed" "450"
 	"playerspeed" "450"
-	"playSounds" "0"
+	"playSounds" "1"
 	"renderamt" "255"
 	"rendercolor" "255 255 255"
 	"renderfx" "0"
@@ -3118,7 +3324,6 @@ entity
 	"font" "editor/worldtext"
 	"message" "Temporary On"
 	"spawnflags" "0"
-	"targetname" "<pack_rename>"
 	"textsize" "10"
 	"origin" "-720 -320 -64"
 	editor
@@ -3138,7 +3343,6 @@ entity
 	"font" "editor/worldtext"
 	"message" "Temporary Off"
 	"spawnflags" "0"
-	"targetname" "<pack_rename>"
 	"textsize" "10"
 	"origin" "-720 -288 -64"
 	editor
@@ -3234,7 +3438,6 @@ entity
 	"font" "editor/worldtext"
 	"message" "Enable"
 	"spawnflags" "0"
-	"targetname" "<pack_rename>"
 	"textsize" "10"
 	"origin" "-720 -160 -96"
 	editor
@@ -3254,7 +3457,6 @@ entity
 	"font" "editor/worldtext"
 	"message" "Disable"
 	"spawnflags" "0"
-	"targetname" "<pack_rename>"
 	"textsize" "10"
 	"origin" "-720 -128 -96"
 	editor
@@ -3312,22 +3514,6 @@ entity
 }
 entity
 {
-	"id" "471"
-	"classname" "info_player_start"
-	"angles" "0 90 0"
-	"spawnflags" "0"
-	"targetname" "<pack_rename>"
-	"origin" "-624 -512 -192"
-	editor
-	{
-		"color" "0 255 0"
-		"visgroupshown" "1"
-		"visgroupautoshown" "1"
-		"logicalpos" "[0 6000]"
-	}
-}
-entity
-{
 	"id" "844"
 	"classname" "prop_faithplate"
 	"AbsoluteVelocityCheck" "0"
@@ -3338,7 +3524,7 @@ entity
 	"applyangularimpulse" "1"
 	"artificialCollision" "1"
 	"body" "0"
-	"DirectionSuppressAirControl" "0"
+	"DirectionSuppressAirControl" "1"
 	"disableflashlight" "0"
 	"disablereceiveshadows" "0"
 	"disableshadowdepth" "0"
@@ -3358,7 +3544,7 @@ entity
 	"overgrownEnabled" "0"
 	"physicsspeed" "450"
 	"playerspeed" "450"
-	"playSounds" "0"
+	"playSounds" "1"
 	"renderamt" "255"
 	"rendercolor" "255 255 255"
 	"renderfx" "0"
@@ -3485,7 +3671,6 @@ entity
 	"font" "editor/worldtext"
 	"message" "Temporary On"
 	"spawnflags" "0"
-	"targetname" "<pack_rename>"
 	"textsize" "10"
 	"origin" "-720 -48 -64"
 	editor
@@ -3505,7 +3690,6 @@ entity
 	"font" "editor/worldtext"
 	"message" "Temporary Off"
 	"spawnflags" "0"
-	"targetname" "<pack_rename>"
 	"textsize" "10"
 	"origin" "-720 -16 -64"
 	editor
@@ -3525,7 +3709,6 @@ entity
 	"font" "editor/worldtext"
 	"message" "Enable"
 	"spawnflags" "0"
-	"targetname" "<pack_rename>"
 	"textsize" "10"
 	"origin" "-720 144 -96"
 	editor
@@ -3545,7 +3728,6 @@ entity
 	"font" "editor/worldtext"
 	"message" "Disable"
 	"spawnflags" "0"
-	"targetname" "<pack_rename>"
 	"textsize" "10"
 	"origin" "-720 176 -96"
 	editor
