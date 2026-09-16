@@ -1,19 +1,23 @@
 /**
-* @brief   Some debug ConCommands.
+* @brief   Debug ConVars and ConCommands for OEE.
 * @details
 * @authors Orsell
 *
 * @license Distributed under the MIT license.
 */
 
-#include "core.as"
+#include "./logging.as"
 
-[ServerCommand("extendedents_triggers_getsizes", "")]
+ConVar oee_debug("oee_debug", "1"); // TODO-FIXME: Remember to change this to 0 on release.
+
+#if SERVER
+
+[ServerCommand("oee_triggers_getsizes", "")]
 void GetTriggerSize( const CommandArgs@ args )
 {
-    for (CBaseEntity@ ent = null; (@ent = EntityList().Next(ent)) != null;)
+    for (CBaseEntity@ ent = EntityList().First(); (@ent = @EntityList().Next(ent)) !is null;)
     {
-        if (@ent == null)
+        if (ent is null)
             return;
 
         if (!ent.IsTrigger())
@@ -24,7 +28,7 @@ void GetTriggerSize( const CommandArgs@ args )
         Vector entSize = ent.CollisionProp().GetOBBSize();
         float entRadius = ent.CollisionProp().GetBoundingRadius();
 
-        EELog("{} | {}".format(ent.GetClassname(), ent.GetEntityName()));
+        EELog("{} | {}".format(ent.GetClassname(), ent.GetDebugName()));
         EELog("IsBSPModel: {}".format(ent.IsBSPModel()));
         EELog("entMinSize: ({}, {}, {}), entMaxSize: ({}, {}, {})".format(entMinSize.x, entMinSize.y, entMinSize.z, entMaxSize.x, entMaxSize.y, entMaxSize.z));
         EELog("size: ({}, {}, {})".format(entSize.x, entSize.y, entSize.z));
@@ -32,3 +36,5 @@ void GetTriggerSize( const CommandArgs@ args )
         EELog("--------------------");
     }
 }
+
+#endif

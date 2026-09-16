@@ -3,7 +3,7 @@
 * @details There is no proper assert function for AngelScript, so this is a small implementation that will throw then there is a error.
 * @authors Orsell
 *
-* @license Distributed under the MIT license - Copyright (c) 2026 Project Collapse Studios
+* @license Distributed under the MIT license
 */
 
 /**
@@ -15,7 +15,5 @@
 void assert( const bool testStatement, const string&in errMsg = "Passed statement was false!" )
 {
     if (!testStatement)
-    {
         throw("Assertion hit! Error: " + errMsg);
-    }
 }

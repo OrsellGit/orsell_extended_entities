@@ -6,17 +6,38 @@
 * @license Distributed under the MIT license.
 */
 
+#if SERVER
+
 [LevelInitPreEntity]
 void OnLevelInitPreEntity()
 {
-    Msgl("LOADING OEE!");
+    Msgl("LOADING OEE SERVER!");
 }
 
-// TODO: Properly separate out things that should just be on the client like debug vs stuff on the server like entities.
-#if SERVER
+[LevelShutdownPreEntity]
+void OnLevelShutdownPreEntity()
+{
+    Msgl("SHUTTING DOWN OEE SERVER!");
+}
 
-#include "debug.as"
-
-#include "entities/prop_faithplate.as"
+#include "./server/entities/prop_faithplate.as"
 
 #endif
+
+#if CLIENT
+
+[LevelInitPreEntity]
+void OnLevelInitPreEntity()
+{
+    Msgl("LOADING OEE CLIENT!");
+}
+
+[LevelShutdownPreEntity]
+void OnLevelShutdownPreEntity()
+{
+    Msgl("SHUTTING DOWN OEE CLIENT!");
+}
+
+#endif
+
+#include "./shared/debug.as"
