@@ -5,8 +5,6 @@
 	studioprop()
 	catapult()
 	orientedboundingbox(triggerWidth, triggerHeight, triggerDepth)
-	line(255 255 255, targetname, filtername)
-	line(255 255 0, targetname, launchTarget)
 = prop_faithplate: "An entity which will make a working faith plate. Based on the prop_dynamic and trigger_catapult setup normally done for faith plates."
 [
 	sep1(string) readonly : "----------------------------------------------------------------------------------------------------------"
@@ -14,13 +12,13 @@
 	spawnflags(flags) = [
 		1: "[1] Clients/Players" : 1
 		2: "[2] NPCs" : 0
-		8: "[8] Physics Objects" : 1
-		16: "[16] Only player ally NPCs" : 0
-		32: "[32] Only clients in vehicles" : 0
-		64: "[64] Everything (not including physics debris)" : 0
-		512: "[512] Only clients *not* in vehicles" : 0
-		1024: "[1024] Physics debris" : 0
-		2048: "[2048] Only NPCs in vehicles (respects player ally flag)" : 0
+		8: "[8] Physics objects" : 1
+		16: "[16] Only player ally NPCs." : 0
+		32: "[32] Only clients in vehicles." : 0
+		64: "[64] Everything (not including physics debris)." : 0
+		512: "[512] Only clients *not* in vehicles." : 0
+		1024: "[1024] Physics debris." : 0
+		2048: "[2048] Only NPCs in vehicles (respects player ally flag)." : 0
 	]
 
 	// KeyValues
@@ -55,17 +53,17 @@
 	// Inputs
 	input Enable(void) : "Enable the faith plate, sets the skin that represents it's on state."
 	input Disable(void) : "Disable the faith plate, sets the skin that represents it's off state."
-	input Toggle(void) : "Toggles the current state of the faith plate."
+	input Toggle(void) : "Toggles the current enabled state of the faith plate."
 	input TempOn(void) : "Turns the faith plate temporary on before turning it back off. If the plate is already on, this will turn it off."
 	input TempOff(void) : "Turns the faith plate temporary off before turning it back on. If the plate is already off, this will turn it on."
 	input GetEnabled(void) : "Get if the faith plate is enabled or disabled."
 	input SetTempStateTime(float) : "Set how long the temporary state timer should last. Negative values will tell it to go on infinitely."
 
 	// Outputs
-	output OnGetEnabled(integer) : "Returns the state of the faith plate when GetEnable is called."
+	output OnGetEnabled(integer) : "Returns the state of the faith plate when the input GetEnable is called."
 	output OnEnable(void) : "Faith plate was enabled."
 	output OnDisable(void) : "Faith plate was disabled."
 	output OnTempStateEnter(integer) : "When the plate enters temporary state. Returns if temporary state called is on or off."
 	output OnTempStateExit(integer) : "When the plate exits temporary state. Returns if temporary state called is on or off."
-	output OnCatapultedPlayer(void) : "Called when a player is catapulted."
+	output OnCatapultedPlayer(void) : "Called when specifically a player is catapulted. OnCatapulted triggers for both players and physics objects."
 ]
