@@ -5,7 +5,7 @@
 	studioprop()
 	catapult()
 	orientedboundingbox(triggerWidth, triggerHeight, triggerDepth)
-= prop_faithplate: "An entity which will make a working faith plate. Based on the prop_dynamic and trigger_catapult setup normally done for faith plates."
+= oee_faithplate: "An entity which will make a working faith plate. Based on the prop_dynamic and trigger_catapult setup normally done for faith plates."
 [
 	sep1(string) readonly : "----------------------------------------------------------------------------------------------------------"
 

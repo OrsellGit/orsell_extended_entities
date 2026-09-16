@@ -6,23 +6,24 @@
 * @license Distributed under the MIT license.
 */
 
-#include "../../shared/logging.as"
 #include "../../shared/assert.as"
+#include "../../shared/debug.as"
+#include "../../shared/logging.as"
 
 ConVar oee_debug_plates("oee_debug_plates", "0");
 
 /**
-* @brief Specific logging function for prop_faithplate debugging.
+* @brief Specific logging function for oee_faithplate debugging.
 *        Needs "oee_debug_plates" to be 1 to log to console.
 * @param Message to send to console.
 * @param Log level. 0 = Info, 1 = Warn
 */
 void EEPlateLog(const string&in msg, const int level = 0)
 {
-    if (!oee_debug_plates.GetBool())
+    if (!oee_debug_plates.GetBool() && level < 1)
         return;
 
-    EELog("[prop_faithplate] " + msg, level);
+    EELog("[CPropFaithPlate] " + msg, level);
 }
 
 
@@ -34,7 +35,7 @@ void FlingAngle( const CommandArgs@ args )
     player.GetPhysicsObject().SetVelocityInstantaneous(Vector(670,670,670), Vector(-90, 0, 0));
 }
 
-[ServerCommand("oee_plates_inputs", "Test prop_faithplate using various inputs.")]
+[ServerCommand("oee_plates_inputs", "Test oee_faithplate using various inputs.")]
 void TestPlates( const CommandArgs@ args )
 {
     if (args.ArgC() < 2)
@@ -43,7 +44,7 @@ void TestPlates( const CommandArgs@ args )
         return;
     }
 
-    for (CBaseEntity@ ent = null; (@ent = @EntityList().FindByClassname(ent, "prop_faithplate")) !is null;)
+    for (CBaseEntity@ ent = null; (@ent = @EntityList().FindByClassname(ent, "oee_faithplate")) !is null;)
     {
         if (ent is null)
             continue;
@@ -170,7 +171,7 @@ enum PlateSkins
 
 // ------------------------ ENTITY CLASS ------------------------ \\
 
-[Entity("prop_faithplate")]
+[Entity("oee_faithplate")]
 class CPropFaithPlate : CBaseAnimating
 {
 
@@ -430,7 +431,7 @@ class CPropFaithPlate : CBaseAnimating
         this.m_pTriggerCatapult.Get().FireInput("SetExactVelocityChoiceType", setExactVelocityChoiceTypeVal, 0.0f, data.activator, data.caller);
     }
 
-    //? Not suppose to be directly inputted on! Meant for when the trigger_catapults catapults and sends a input into this entity. Will be combined later.
+    //? Not suppose to be directly inputted on the entity! Meant for when the trigger_catapults catapults and sends a input into this entity. Will be combined later.
     [Input("Catapult", FIELD_INPUT)]
     void InputCatapult( const InputData&in data )
     {
@@ -602,7 +603,7 @@ class CPropFaithPlate : CBaseAnimating
         // DEBUG
         {
             EEPlateLog("-----------------------------");
-            EEPlateLog('Spawning prop_faithplate with name: {}'.format(this.GetDebugName()));
+            EEPlateLog('Spawning oee_faithplate with name: {}'.format(this.GetDebugName()));
             EEPlateLog('model: {}'.format(this.kv_sModel));
             EEPlateLog('overgroundEnabled: {}'.format(this.kv_bOvergrown));
             EEPlateLog('playSounds: {}'.format(this.kv_bPlaySounds));
@@ -613,8 +614,8 @@ class CPropFaithPlate : CBaseAnimating
             EEPlateLog("-----------------------------");
         }
 
-        this.Precache();
         CBaseAnimating::Spawn();
+        this.Precache();
 
         // Setup faith plate model and collision. Those without proper collisions need to rely on their BBOX.
         this.SetModel(this.kv_sModel);
@@ -633,7 +634,7 @@ class CPropFaithPlate : CBaseAnimating
         IPhysicsObject@ pPhys = @this.VPhysicsInitStatic();
         if (pPhys is null)
         {
-            EELog("Failed to make VPhysics collision for model!", 1);
+            EEPlateLog("Failed to make VPhysics collision for model on oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
             return;
         }
 
@@ -644,17 +645,25 @@ class CPropFaithPlate : CBaseAnimating
             if (this.m_iAnimFlingIdle != -1)
                 break;
         }
+        if (this.m_iAnimFlingIdle == -1)
+            EEPlateLog("Failed to retrieve idle animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
 
         this.m_iAnimFlingAngled = this.LookupSequence(ANGLED_ANIM);
+        if (this.m_iAnimFlingAngled == -1)
+            EEPlateLog("Failed to retrieve angled animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
         this.m_iAnimFlingUp = this.LookupSequence(STRAIGHTUP_ANIM);
+        if (this.m_iAnimFlingUp == -1)
+            EEPlateLog("Failed to retrieve fling up animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
         this.m_iAnimFlingFastAngled = this.LookupSequence(FAST_ANGLED_ANIM);
+        if (this.m_iAnimFlingFastAngled == -1)
+            EEPlateLog("Failed to retrieve fast angled animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
 
         this.SetPlaybackRate(1.0f);
         this.ResetSequence(this.m_iAnimFlingIdle);
 
         // CTriggerCatapult setup
         {
-            // TODO: Replace this with separate entity class. Maybe? Might not need to.
+            // TODO: Replace this with separate entity class similar to prop_floor_button. Maybe? Might not need to.
             CBaseTrigger@ trigger = util::CreateEntityByNameT<CBaseTrigger>("trigger_catapult");
 
             //! This is annoying! There has got to be a better way!
@@ -699,7 +708,6 @@ class CPropFaithPlate : CBaseAnimating
             EEPlateLog("-----------------------------");
         }
 
-
         // Set trigger size using the three KVs, cursed and a tad annoying.
         Vector sizeVector, sizeVectorNegated;
         sizeVectorNegated = sizeVector = Vector(this.kv_fTriggerWidth, this.kv_fTriggerDepth, this.kv_fTriggerHeight) / 2;
@@ -715,18 +723,17 @@ class CPropFaithPlate : CBaseAnimating
         {
             if (this.LookupAttachment("light") > 0)
             {
-                // TODO: Remove these to strings once converting Vectors to strings is a thing
-                string offColor = "{} {} {}".format(this.kv_vSpriteOffColor.r, this.kv_vSpriteOffColor.g, this.kv_vSpriteOffColor.b);
-                string onColor = "{} {} {}".format(this.kv_vSpriteOnColor.r, this.kv_vSpriteOnColor.g, this.kv_vSpriteOnColor.b);
+                //string offColor = ColorToString(this.kv_vSpriteOffColor);
+                //string onColor = ColorToString(this.this.kv_vSpriteOnColor);
                 CBaseEntity@ sprite = util::CreateEntityByNameT<CBaseEntity>("env_sprite");
                 if (sprite is null)
                 {
-                    EELog("Failed to make sprite entity for faith plate!", 1);
+                    EEPlateLog("Failed to make sprite entity for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
                     return;
                 }
 
-                sprite.KeyValue("rendercolor", this.kv_bStartDisabled ? offColor : onColor);
-                sprite.KeyValue("renderamt", this.kv_iSpriteBrightness);
+                sprite.KeyValue("rendercolor", this.kv_bStartDisabled ? ColorToString(this.kv_vSpriteOffColor) : ColorToString(this.kv_vSpriteOnColor));
+                sprite.KeyValue("renderamt", this.kv_iSpriteBrightness); // TODO: Could condense this from being a separate KV and instead use the alpha parameter of Color.
                 sprite.KeyValue("rendermode", "9");
                 sprite.KeyValue("model", "sprites/light_glow02.vmt");
                 sprite.KeyValue("scale", "0.7");
@@ -740,7 +747,7 @@ class CPropFaithPlate : CBaseAnimating
                 this.m_pPlateSprite.Set(sprite);
             }
             else
-                EELog("prop_faithplate:{} has 'Light Sprite' enabled but model set has no 'light' attachment to use!", 1);
+                EEPlateLog("The oee_faithplate with name '{}' and index '{}' has 'Light Sprite' enabled but model set has no 'light' attachment to use!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
         }
 
         this.m_bFaithPlateState = !this.kv_bStartDisabled;
@@ -809,7 +816,8 @@ class CPropFaithPlate : CBaseAnimating
         this.DispatchAnimEvents(this);
 
         if (this.IsSequenceFinished())
-            this.SetPlaybackRate(0.0f);
+            this.ResetSequence(this.m_iAnimFlingIdle);
+
     }
 
     void MainThink()
@@ -817,6 +825,8 @@ class CPropFaithPlate : CBaseAnimating
         if (oee_debug_plates.GetBool())
             debug::EntityBounds(this.m_pTriggerCatapult.Get(), 255, 150, 0, 25, 0.05f);
 
+        // Only animate if sequence playback rate is set to play the animation.
+        // TODO: Could probably have a better check for this like if a sequence has been set to play instead.
         if (this.GetPlaybackRate() > 0.0f)
             this.AnimateThink();
 

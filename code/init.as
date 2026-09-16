@@ -6,6 +6,8 @@
 * @license Distributed under the MIT license.
 */
 
+#include "./shared/debug.as"
+
 #if SERVER
 
 [LevelInitPreEntity]
@@ -20,7 +22,7 @@ void OnLevelShutdownPreEntity()
     Msgl("SHUTTING DOWN OEE SERVER!");
 }
 
-#include "./server/entities/prop_faithplate.as"
+#include "./server/entities/oee_faithplate.as"
 
 #endif
 
@@ -39,5 +41,3 @@ void OnLevelShutdownPreEntity()
 }
 
 #endif
-
-#include "./shared/debug.as"
