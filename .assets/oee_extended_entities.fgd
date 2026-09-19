@@ -29,7 +29,8 @@
 	overgrownEnabled(boolean) : "Use Overgrown Model" : 0 : "If the overgrown skins of the faith plate model should be used. Leave 0 if the model doesn't have overgrown skins."
 	useNewDisableSkin(boolean) : "Use New Disabled Faith Plate Skin" : 0 : "Len's EverythingPBR faith plate model comes with a off light skin along with the usual blue and orange. Should this off skin be used instead the orange skin?"
 	artificialCollision(boolean) : "Provide Artificial Collision" : 1 : "The vanilla faith plate model doesn't come with any collision. However, custom models can provide this collision.\nIf a model with custom collision is selected, disable this so collision based on the OBB is not provided so the model can take over with its own."
-	faithplate128(boolean) : "Faith Plate 128 Style" : 0 : "If this is the 128 variant of the faith plate or a faith plate model similar that just has a idle and up animation."
+	forceUpAnimation(boolean) : "Force Up Animation" : 0 : "Force using up animation instead of determining animation by target angle."
+	fastAnimation(boolean) : "Play Fast Angled Animation" : 0 : "Enable to use the fast variants instead of the standard angled or up animations."
 
 	triggerWidth(float) : "Trigger Width" : 60 : "The width of the trigger along the x-axis/red axis."
 	triggerDepth(float) : "Trigger Depth" : 25 : "The depth of the trigger along the y-axis/green axis."

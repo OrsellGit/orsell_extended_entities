@@ -1,6 +1,6 @@
 /**
 * @brief   A normal faith plate setup that allows for more customization and other settings.
-*! @details WIP STILL! DOESN'T ANIMATE ! IN GENERAL THIS CODE IS NOT GREAT AND NEEDS CLEAN UP!
+*! @details WIP! Code still needs some clean up!
 * @authors Orsell
 *
 * @license Distributed under the MIT license.
@@ -24,15 +24,6 @@ void EEPlateLog(const string&in msg, const int level = 0)
         return;
 
     EELog("[CPropFaithPlate] " + msg, level);
-}
-
-
-[ServerCommand("oee_plates_flingangle", "")]
-void FlingAngle( const CommandArgs@ args )
-{
-    CBaseEntity@ player = EntityList().FindByClassname(null, "player");
-    EEPlateLog("IsPlayer {}".format(player.IsPlayer()));
-    player.GetPhysicsObject().SetVelocityInstantaneous(Vector(670,670,670), Vector(-90, 0, 0));
 }
 
 [ServerCommand("oee_plates_inputs", "Test oee_faithplate using various inputs.")]
@@ -101,43 +92,7 @@ void TestPlates( const CommandArgs@ args )
     }
 }
 
-Vector CalculateLaunchVector( CBaseEntity@ pVictim, CBaseEntity@ pTarget  )
-{
-    if (pVictim is null || pTarget is null)
-    {
-        assert(false);
-        return vec3_invalid;
-    }
-
-    // Find where we're going
-    Vector vecSourcePos = pVictim.GetAbsOrigin();
-    Vector vecTargetPos = pTarget.GetAbsOrigin();
-
-    // If victim is player, adjust target position so player's center will hit the target
-    if ( pVictim.IsPlayer() )
-    {
-        vecTargetPos.z -= 32.0f;
-    }
-
-
-    //float flSpeed = (pVictim.IsPlayer()) ? this.kv_playerSpeed : this.kv_physicsSpeed;	// u/sec
-    float flSpeed = 670;
-    float flGravity = ConVarRef("sv_gravity").GetFloat();
-
-    Vector vecVelocity = (vecTargetPos - vecSourcePos);
-
-    // throw at a constant time
-    float time = vecVelocity.Length( ) / flSpeed;
-    vecVelocity = vecVelocity * (1.f / time); // CatapultLaunchVelocityMultiplier
-
-    // adjust upward toss to compensate for gravity loss
-    vecVelocity.z += flGravity * time * 0.5;
-
-    return vecVelocity;
-}
-
-
-// ------------------------ ENTITY CONSTANTS ------------------------ \\
+// Constants -----------------------
 
 // Default faith plate model does not support overgrown states, will need to be changed out by end user.
 const string DEFAULT_MODEL = "models/props/faith_plate.mdl";
@@ -153,8 +108,9 @@ array<string>@ IDLE_ANIMS =
 };
 
 const string ANGLED_ANIM = "angled";
-const string STRAIGHTUP_ANIM = "straightup";
 const string FAST_ANGLED_ANIM = "fast";
+const string STRAIGHTUP_ANIM = "straightup";
+const string FAST_STRAIGHTUP_ANIM = "fastup";
 const int UPWARDS_FLING_ANIM_DEGREE_THRESHOLD = 70;
 const float TEMP_STATE_BLINK_INTERVAL = 0.5f;
 
@@ -168,8 +124,9 @@ enum PlateSkins
     RUST_OFF
 }
 
+// ---------------------------------------------
 
-// ------------------------ ENTITY CLASS ------------------------ \\
+// Entity Class -----------------------
 
 [Entity("oee_faithplate")]
 class CPropFaithPlate : CBaseAnimating
@@ -194,13 +151,17 @@ class CPropFaithPlate : CBaseAnimating
     // Set when the temporary state needs to be interrupted by Enable/Disable inputs.
     private bool m_bInterruptTempState = false;
 
+    // Used to track when to play the blink sound.
+    private bool m_bPreviousBlinkOn = true;
+
     private int m_iAnimFlingIdle = -1; // Cache the idle animation index.
     private int m_iAnimFlingAngled = -1; // Cache the angled animation index.
     private int m_iAnimFlingUp = -1; // Cache the upward animation index.
     private int m_iAnimFlingFastAngled = -1; // Cache the fast angled animation index.
+    private int m_iAnimFlingFastUp = -1; // Cache the fast angled animation index.
 
-    // Used to track what objects have been catapulted and are still in the air to know when to stop the their fling music.
-    private array<EHandle<CBaseEntity>>@ m_aCatapultedObjects = {};
+    // Used to track what objects have been catapulted and are still in the air to know when to stop the fling music.
+    private array<CBaseEntity@>@ m_aCatapultedObjects;
 
 // ---------------------------------------------
 
@@ -221,8 +182,11 @@ class CPropFaithPlate : CBaseAnimating
     [KeyValue("artificialCollision", FIELD_BOOLEAN)]
     private bool kv_bArtificialCollision; // Vanilla faith plate model comes with no collision by default, so provide artificial collision based on the OBB of the model. If a custom model provides collision, this can be disabled.
 
-    [KeyValue("faithplate128", FIELD_BOOLEAN)]
-    private bool kv_bFaithPlate128; // If this is the 128 variant of the faith plate or a faith plate model similar that just has a idle and up animation.
+    [KeyValue("forceUpAnimation", FIELD_BOOLEAN)]
+    private bool kv_bForceUpAnimation; // Force using up animation instead of determining animation by target angle.
+
+    [KeyValue("fastAnimation", FIELD_BOOLEAN)]
+    private bool kv_bFastAnimation; // Enable to use the fast variants instead of the standard angled or up animations.
 
     [KeyValue("triggerWidth", FIELD_FLOAT)]
     private float kv_fTriggerWidth; // Width size of trigger_catapult.
@@ -393,6 +357,8 @@ class CPropFaithPlate : CBaseAnimating
         this.kv_fTempStateTime = data.value.Float();
     }
 
+// ---------------------------------------------
+
 // trigger_catapult Inputs -------------------------------------
 
     [Input("SetPlayerSpeed", FIELD_FLOAT)]
@@ -441,40 +407,38 @@ class CPropFaithPlate : CBaseAnimating
         // Player launch track should be globally heard while the physics track is applied to the object getting launched
         if (data.activator.IsPlayer())
         {
-            data.activator.EmitSound(this.kv_sLaunchMusicTrackPlayer);
+            if (!this.kv_sLaunchMusicTrackPlayer.empty())
+                data.activator.EmitSound(this.kv_sLaunchMusicTrackPlayer);
             this.out_onCatapultedPlayer.Fire(data.activator, this, 0.0f);
         }
         else
-            data.activator.EmitSound(this.kv_sLaunchMusicTrackPhysics);
+        {
+            if (!this.kv_sLaunchMusicTrackPhysics.empty())
+                data.activator.EmitSound(this.kv_sLaunchMusicTrackPhysics);
+        }
 
-        // EHandle<CBaseEntity> handle;
-        // handle.Set(data.activator);
-        // this.m_aCatapultedObjects.insertLast(handle);
+        //EHandle<CBaseEntity> handle;
+        //handle.Set(data.activator);
+        //this.m_aCatapultedObjects.insertLast(data.activator);
+        EEPlateLog("Added entity '{}' with index '{}' to launch list.".format(data.activator.GetDebugName(), data.activator.GetEntityIndex()));
 
         this.out_onCatapulted.Fire(data.activator, this, 0.0f);
 
-        if (this.kv_bFaithPlate128)
+        // TODO: Add launch angle calculation function here.
+        bool isAngledUp = this.kv_bForceUpAnimation;// || ;
+
+        if (isAngledUp)
         {
-            this.ResetSequence(this.m_iAnimFlingUp);
+            this.ResetSequence(this.kv_bFastAnimation ? this.m_iAnimFlingFastUp : this.m_iAnimFlingUp);
             return;
         }
 
-        // TODO: Calculate launch angle to determine which animation to play.
-        this.ResetSequence(this.m_iAnimFlingAngled);
+        this.ResetSequence(this.kv_bFastAnimation ? this.m_iAnimFlingFastAngled : this.m_iAnimFlingAngled);
     }
 
 // ---------------------------------------------
 
-
-    // ------------------------ ENTITY CTOR & DTOR ------------------------ \\
-
-    // CPropFaithPlate()
-    // {
-    //     this.m_aCatapultedObjects = {};
-    // }
-
-
-    // ------------------------ ENTITY PRIVATE FUNCTIONS ------------------------ \\
+// Private Functions -------------------------------------
 
     /**
     * @brief Return the appropriate skin for the faith plate. Specifically made with the faith plate in mind.
@@ -493,7 +457,9 @@ class CPropFaithPlate : CBaseAnimating
         return this.kv_bOvergrown ? RUST_ORANGE : CLEAN_ORANGE;
     }
 
-    // ------------------------ ENTITY PUBLIC FUNCTIONS ------------------------ \\
+// ---------------------------------------------
+
+// Public Functions -------------------------------------
 
     /**
     * @brief Used to set the faith plate state.
@@ -570,8 +536,9 @@ class CPropFaithPlate : CBaseAnimating
         this.out_onTempEnter.Fire(enableState ? 1 : 0, activator, this);
     }
 
+// ---------------------------------------------
 
-    // ------------------------ ENTITY CLASS FUNCTIONS ------------------------ \\
+// Public Entity class Functions -------------------------------------
 
     /**
     * @brief Precaching assets for entity.
@@ -586,9 +553,9 @@ class CPropFaithPlate : CBaseAnimating
             this.kv_sTickingSound = DEFAULT_TICKING_SOUND;
 
         PrecacheModel(this.kv_sModel);
+        PrecacheScriptSound(this.kv_sTickingSound);
         if (this.kv_bPlaySounds)
             PrecacheScriptSound(this.kv_sLaunchSound);
-        PrecacheScriptSound(this.kv_sTickingSound);
         if (!this.kv_sLaunchMusicTrackPlayer.empty())
             PrecacheScriptSound(this.kv_sLaunchMusicTrackPlayer);
         if (!this.kv_sLaunchMusicTrackPhysics.empty())
@@ -651,12 +618,18 @@ class CPropFaithPlate : CBaseAnimating
         this.m_iAnimFlingAngled = this.LookupSequence(ANGLED_ANIM);
         if (this.m_iAnimFlingAngled == -1)
             EEPlateLog("Failed to retrieve angled animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
-        this.m_iAnimFlingUp = this.LookupSequence(STRAIGHTUP_ANIM);
-        if (this.m_iAnimFlingUp == -1)
-            EEPlateLog("Failed to retrieve fling up animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
+
         this.m_iAnimFlingFastAngled = this.LookupSequence(FAST_ANGLED_ANIM);
         if (this.m_iAnimFlingFastAngled == -1)
             EEPlateLog("Failed to retrieve fast angled animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
+
+        this.m_iAnimFlingUp = this.LookupSequence(STRAIGHTUP_ANIM);
+        if (this.m_iAnimFlingUp == -1)
+            EEPlateLog("Failed to retrieve fling up animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
+
+        this.m_iAnimFlingFastAngled = this.LookupSequence(FAST_STRAIGHTUP_ANIM);
+        if (this.m_iAnimFlingFastUp == -1)
+            EEPlateLog("Failed to retrieve fast up animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
 
         this.SetPlaybackRate(1.0f);
         this.ResetSequence(this.m_iAnimFlingIdle);
@@ -689,11 +662,22 @@ class CPropFaithPlate : CBaseAnimating
                 trigger.KeyValue("launchsound", "" );
 
             // In order to make this trigger output to this entity, use a KV trick to add a I/O element that will pass OnCatapulted calls to this entity.
+            // TODO-FIXME: If a entity if not named, then this input can effect all unnamed faith plates!
             trigger.KeyValue("OnCatapulted", "{},Catapult,,0,-1".format(this.GetDebugName()));
 
             trigger.Spawn();
             trigger.Activate();
             this.m_pTriggerCatapult.Set(trigger);
+
+            // Set trigger size using the three KVs, this is a tad annoying. Hopefully, a better helper will be implemented later to allow for vector input.
+            Vector sizeVector, sizeVectorNegated;
+            sizeVectorNegated = sizeVector = Vector(this.kv_fTriggerWidth, this.kv_fTriggerDepth, this.kv_fTriggerHeight) / 2;
+            sizeVectorNegated.Negate();
+            this.m_pTriggerCatapult.Get().SetAbsOrigin(this.GetAbsOrigin() + this.kv_vTriggerPosOffset);
+            this.m_pTriggerCatapult.Get().SetAbsAngles(this.GetAbsAngles());
+            this.m_pTriggerCatapult.Get().SetCollisionBounds(sizeVectorNegated, sizeVector);
+            this.m_pTriggerCatapult.Get().SetSolid(ESolidType::SOLID_OBB);
+            this.m_pTriggerCatapult.Get().SetParent(this);
         }
 
         // DEBUG
@@ -707,16 +691,6 @@ class CPropFaithPlate : CBaseAnimating
             EEPlateLog('launchsound: {}'.format(this.kv_sLaunchSound));
             EEPlateLog("-----------------------------");
         }
-
-        // Set trigger size using the three KVs, cursed and a tad annoying.
-        Vector sizeVector, sizeVectorNegated;
-        sizeVectorNegated = sizeVector = Vector(this.kv_fTriggerWidth, this.kv_fTriggerDepth, this.kv_fTriggerHeight) / 2;
-        sizeVectorNegated.Negate();
-        this.m_pTriggerCatapult.Get().SetAbsOrigin(this.GetAbsOrigin() + this.kv_vTriggerPosOffset);
-        this.m_pTriggerCatapult.Get().SetAbsAngles(this.GetAbsAngles());
-        this.m_pTriggerCatapult.Get().SetCollisionBounds(sizeVectorNegated, sizeVector);
-        this.m_pTriggerCatapult.Get().SetSolid(ESolidType::SOLID_OBB);
-        this.m_pTriggerCatapult.Get().SetParent(this);
 
         // Add sprite to the face of the faith plate if the model supports it.
         if (this.kv_bAddSprite)
@@ -766,16 +740,15 @@ class CPropFaithPlate : CBaseAnimating
     */
     void TempStateThink()
     {
-        // DEBUG
-        {
-            EEPlateLog("-------------");
-            EEPlateLog("TEST THINKKKK");
-            EEPlateLog("goalTempTime: {}".format(this.m_fGoalTempTime));
-            EEPlateLog("interruptTempState: {}".format(this.m_bInterruptTempState));
-            EEPlateLog("GetCurrentTime: {}".format(util::GetCurrentTime()));
-            EEPlateLog("this.goalTempTime <= util::GetCurrentTime(): {}".format(this.m_fGoalTempTime <= util::GetCurrentTime()));
-            EEPlateLog("-------------");
-        }
+        // VERBOSE DEBUG
+        // {
+        //     EEPlateLog("-------------");
+        //     EEPlateLog("goalTempTime: {}".format(this.m_fGoalTempTime));
+        //     EEPlateLog("interruptTempState: {}".format(this.m_bInterruptTempState));
+        //     EEPlateLog("GetCurrentTime: {}".format(util::GetCurrentTime()));
+        //     EEPlateLog("this.goalTempTime <= util::GetCurrentTime(): {}".format(this.m_fGoalTempTime <= util::GetCurrentTime()));
+        //     EEPlateLog("-------------");
+        // }
 
         // End state when goal time has passed. Do not exit when goal is negative as that is used for temp states which go on forever.
         if ((this.m_fGoalTempTime <= util::GetCurrentTime()) && kv_fTempStateTime > 0.0f || this.m_bInterruptTempState)
@@ -792,8 +765,9 @@ class CPropFaithPlate : CBaseAnimating
 
         // Switch between on and off skin states. Blinks every TEMP_STATE_BLINK_INTERVAL seconds.
         bool blinkOn = (int(util::GetCurrentTime() / TEMP_STATE_BLINK_INTERVAL) % 2) == 0;
-        if (!blinkOn)
+        if (!blinkOn && this.m_bPreviousBlinkOn)
             this.EmitSound(this.kv_sTickingSound);
+        this.m_bPreviousBlinkOn = blinkOn;
 
         this.SetSkin(this.RetrieveStateSkin(blinkOn));
         if (this.kv_bAddSprite && this.m_pPlateSprite.IsValid())
@@ -802,10 +776,7 @@ class CPropFaithPlate : CBaseAnimating
                 this.m_pPlateSprite.Get().KeyValue("renderamt", blinkOn ? this.kv_iSpriteBrightness : "0");
             else
             {
-                // TODO: Remove these to strings once converting Vectors to strings is a thing
-                string offColor = "{} {} {}".format(this.kv_vSpriteOffColor.r, this.kv_vSpriteOffColor.g, this.kv_vSpriteOffColor.b);
-                string onColor = "{} {} {}".format(this.kv_vSpriteOnColor.r, this.kv_vSpriteOnColor.g, this.kv_vSpriteOnColor.b);
-                this.m_pPlateSprite.Get().KeyValue("rendercolor", blinkOn ? onColor : offColor);
+                this.m_pPlateSprite.Get().KeyValue("rendercolor", blinkOn ? ColorToString(this.kv_vSpriteOffColor) : ColorToString(this.kv_vSpriteOnColor));
             }
         }
     }
@@ -817,7 +788,6 @@ class CPropFaithPlate : CBaseAnimating
 
         if (this.IsSequenceFinished())
             this.ResetSequence(this.m_iAnimFlingIdle);
-
     }
 
     void MainThink()
@@ -876,4 +846,9 @@ class CPropFaithPlate : CBaseAnimating
 
         SetNextThink(util::GetCurrentTime() + 0.01f, "CPropFaithPlate::MainThink");
     }
+
+// ---------------------------------------------
+
 }
+
+// ---------------------------------------------
