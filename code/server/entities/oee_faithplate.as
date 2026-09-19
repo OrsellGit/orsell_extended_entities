@@ -673,8 +673,7 @@ class CPropFaithPlate : CBaseAnimating
                 trigger.KeyValue("launchsound", "" );
 
             // In order to make this trigger output to this entity, use a KV trick to add a I/O element that will pass OnCatapulted calls to this entity.
-            // TODO-FIXME: If a entity if not named, then this input can effect all unnamed faith plates!
-            trigger.KeyValue("OnCatapulted", "{},Catapult,,0,-1".format(this.GetDebugName()));
+            trigger.KeyValue("OnCatapulted", "!parent,Catapult,,0,-1");
 
             trigger.Spawn();
             trigger.Activate();
