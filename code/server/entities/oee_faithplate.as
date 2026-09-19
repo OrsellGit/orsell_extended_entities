@@ -9,6 +9,7 @@
 #include "../../shared/assert.as"
 #include "../../shared/debug.as"
 #include "../../shared/logging.as"
+#include "../../shared/math.as"
 
 ConVar oee_debug_plates("oee_debug_plates", "0");
 
@@ -111,7 +112,7 @@ const string ANGLED_ANIM = "angled";
 const string FAST_ANGLED_ANIM = "fast";
 const string STRAIGHTUP_ANIM = "straightup";
 const string FAST_STRAIGHTUP_ANIM = "fastup";
-const int UPWARDS_FLING_ANIM_DEGREE_THRESHOLD = 70;
+const int UPWARDS_FLING_ANIM_DEGREE_THRESHOLD = 80.0f;
 const float TEMP_STATE_BLINK_INTERVAL = 0.5f;
 
 enum PlateSkins
@@ -141,6 +142,12 @@ class CPropFaithPlate : CBaseAnimating
 
     // env_sprite entity that is used for the faith plate light on top.
     private EHandle<CBaseEntity> m_pPlateSprite;
+
+    // Handle to the entity that the faith plate is targeting.
+    private EHandle<CBaseEntity> m_pLaunchTarget;
+
+    // Cache the launch angle used for launching so the faith plate doesn't have to calculate the target angle for determining animation each time.
+    private float m_fLaunchAngle;
 
     // Tracking the faith plates current state.
     private bool m_bFaithPlateState = false;
@@ -393,9 +400,10 @@ class CPropFaithPlate : CBaseAnimating
     [Input("SetLaunchTarget", FIELD_STRING)]
     void InputSetLaunchTarget( const InputData&in data )
     {
-        this.kv_sLaunchTarget = data.value.String();
+       this.SetLaunchTarget(data.value.String());
+
         Variant setLaunchTargetVal;
-        setLaunchTargetVal.SetString(this.kv_sLaunchTarget);
+        setLaunchTargetVal.SetString(data.value.String());
         this.m_pTriggerCatapult.Get().FireInput("SetLaunchTarget", setLaunchTargetVal, 0.0f, data.activator, data.caller);
     }
 
@@ -435,15 +443,13 @@ class CPropFaithPlate : CBaseAnimating
 
         this.out_onCatapulted.Fire(data.activator, this, 0.0f);
 
-        // TODO: Add launch angle calculation function here.
-        bool isAngledUp = this.kv_bForceUpAnimation;// || ;
-
+        // Determine if the target entity/location is above the faith plate.
+        bool isAngledUp = this.kv_bForceUpAnimation || this.IsTargetUp();
         if (isAngledUp)
         {
             this.ResetSequence(this.kv_bFastAnimation ? this.m_iAnimFlingFastUp : this.m_iAnimFlingUp);
             return;
         }
-
         this.ResetSequence(this.kv_bFastAnimation ? this.m_iAnimFlingFastAngled : this.m_iAnimFlingAngled);
     }
 
@@ -467,6 +473,12 @@ class CPropFaithPlate : CBaseAnimating
 
         return this.kv_bOvergrown ? RUST_ORANGE : CLEAN_ORANGE;
     }
+
+    private bool IsTargetUp()
+    {
+        return m_fLaunchAngle >= UPWARDS_FLING_ANIM_DEGREE_THRESHOLD;
+    }
+
 
 // ---------------------------------------------
 
@@ -545,6 +557,36 @@ class CPropFaithPlate : CBaseAnimating
         }
 
         this.out_onTempEnter.Fire(enableState ? 1 : 0, activator, this);
+    }
+
+    void SetLaunchTarget( const string&in targetName )
+    {
+        this.kv_sLaunchTarget = targetName;
+
+        CBaseEntity@ launchTarget = EntityList().FindByName(null, this.kv_sLaunchTarget);
+        if (launchTarget is null)
+        {
+            EEPlateLog("[SetLaunchTarget] Invalid target name has been passed to SetLaunchTarget! Can't find entity!", 1);
+            this.kv_sLaunchTarget = "";
+            return;
+        }
+        this.m_pLaunchTarget.Set(launchTarget);
+
+        TrajectoryCalculator tCal;
+        tCal.useExactVelocity = kv_bUseExactVelocity;
+        tCal.exactVelocityChoice = ExactVelocityChoice(kv_iExactVelocityChoiceType);
+        tCal.playerSpeed = kv_fPlayerSpeed;
+        tCal.physicsSpeed = kv_fPhysicsSpeed;
+        Vector launchVelocity = tCal.Calculate(this.m_pTriggerCatapult.Get(), this.m_pLaunchTarget.Get().GetAbsOrigin());
+
+        // Launch velocity is invalid.
+        if (launchVelocity.LengthSqr() > 0.0f)
+        {
+            float horizontalAngle = sqrt( pow(launchVelocity.x, 2) + pow(launchVelocity.y, 2) );
+            this.m_fLaunchAngle = atan2( launchVelocity.z, horizontalAngle ) * 180.0f / M_PI;
+        }
+        else
+            EEPlateLog("[SetLaunchTarget] Failed to retrieve launch angle! Check location of target entity!");
     }
 
 // ---------------------------------------------
@@ -688,6 +730,15 @@ class CPropFaithPlate : CBaseAnimating
             this.m_pTriggerCatapult.Get().SetCollisionBounds(sizeVectorNegated, sizeVector);
             this.m_pTriggerCatapult.Get().SetSolid(ESolidType::SOLID_OBB);
             this.m_pTriggerCatapult.Get().SetParent(this);
+
+            this.SetLaunchTarget(this.kv_sLaunchTarget);
+
+            this.m_bFaithPlateState = !this.kv_bStartDisabled;
+            this.SetSkin(RetrieveStateSkin(this.m_bFaithPlateState));
+            if (this.m_bFaithPlateState)
+                this.m_pTriggerCatapult.Get().Enable();
+            else
+                this.m_pTriggerCatapult.Get().Disable();
         }
 
         // DEBUG
@@ -733,13 +784,6 @@ class CPropFaithPlate : CBaseAnimating
             else
                 EEPlateLog("The oee_faithplate with name '{}' and index '{}' has 'Light Sprite' enabled but model set has no 'light' attachment to use!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
         }
-
-        this.m_bFaithPlateState = !this.kv_bStartDisabled;
-        this.SetSkin(RetrieveStateSkin(this.m_bFaithPlateState));
-        if (this.m_bFaithPlateState)
-            this.m_pTriggerCatapult.Get().Enable();
-        else
-            this.m_pTriggerCatapult.Get().Disable();
 
         this.SetThink(ThinkFunc_t(this.MainThink), util::GetCurrentTime(), "CPropFaithPlate::MainThink");
     }
