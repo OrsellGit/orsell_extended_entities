@@ -154,11 +154,16 @@ class CPropFaithPlate : CBaseAnimating
     // Used to track when to play the blink sound.
     private bool m_bPreviousBlinkOn = true;
 
-    private int m_iAnimFlingIdle = -1; // Cache the idle animation index.
-    private int m_iAnimFlingAngled = -1; // Cache the angled animation index.
-    private int m_iAnimFlingUp = -1; // Cache the upward animation index.
-    private int m_iAnimFlingFastAngled = -1; // Cache the fast angled animation index.
-    private int m_iAnimFlingFastUp = -1; // Cache the fast angled animation index.
+    // Cache the idle animation index.
+    private int m_iAnimFlingIdle = -1;
+    // Cache the angled animation index.
+    private int m_iAnimFlingAngled = -1;
+    // Cache the upward animation index.
+    private int m_iAnimFlingUp = -1;
+    // Cache the fast angled animation index.
+    private int m_iAnimFlingFastAngled = -1;
+    // Cache the fast angled animation index.
+    private int m_iAnimFlingFastUp = -1;
 
     // Used to track what objects have been catapulted and are still in the air to know when to stop the fling music.
     private array<CBaseEntity@>@ m_aCatapultedObjects;
@@ -357,7 +362,7 @@ class CPropFaithPlate : CBaseAnimating
         this.kv_fTempStateTime = data.value.Float();
     }
 
-    [Input("SetUseFastAnimation", FIELD_INPUT)]
+    [Input("SetUseFastAnimation", FIELD_BOOLEAN)]
     void InputSetUseFastAnimation( const InputData&in data )
     {
         this.kv_bFastAnimation = data.value.Bool();
@@ -607,7 +612,7 @@ class CPropFaithPlate : CBaseAnimating
         IPhysicsObject@ pPhys = @this.VPhysicsInitStatic();
         if (pPhys is null)
         {
-            EEPlateLog("Failed to make VPhysics collision for model on oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
+            EEPlateLog("[Spawn] Failed to make VPhysics collision for model on oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
             return;
         }
 
@@ -619,23 +624,23 @@ class CPropFaithPlate : CBaseAnimating
                 break;
         }
         if (this.m_iAnimFlingIdle == -1)
-            EEPlateLog("Failed to retrieve idle animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
+            EEPlateLog("[Spawn] Failed to retrieve idle animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
 
         this.m_iAnimFlingAngled = this.LookupSequence(ANGLED_ANIM);
         if (this.m_iAnimFlingAngled == -1)
-            EEPlateLog("Failed to retrieve angled animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
+            EEPlateLog("[Spawn] Failed to retrieve angled animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
 
         this.m_iAnimFlingFastAngled = this.LookupSequence(FAST_ANGLED_ANIM);
         if (this.m_iAnimFlingFastAngled == -1)
-            EEPlateLog("Failed to retrieve fast angled animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
+            EEPlateLog("[Spawn] Failed to retrieve fast angled animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
 
         this.m_iAnimFlingUp = this.LookupSequence(STRAIGHTUP_ANIM);
         if (this.m_iAnimFlingUp == -1)
-            EEPlateLog("Failed to retrieve fling up animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
+            EEPlateLog("[Spawn] Failed to retrieve fling up animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
 
         this.m_iAnimFlingFastAngled = this.LookupSequence(FAST_STRAIGHTUP_ANIM);
         if (this.m_iAnimFlingFastUp == -1)
-            EEPlateLog("Failed to retrieve fast up animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
+            EEPlateLog("[Spawn] Failed to retrieve fast up animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
 
         this.SetPlaybackRate(1.0f);
         this.ResetSequence(this.m_iAnimFlingIdle);
