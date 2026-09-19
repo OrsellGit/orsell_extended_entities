@@ -59,6 +59,7 @@
 	input TempOff(void) : "Turns the faith plate temporary off before turning it back on. If the plate is already off, this will turn it on."
 	input GetEnabled(void) : "Get if the faith plate is enabled or disabled."
 	input SetTempStateTime(float) : "Set how long the temporary state timer should last. Negative values will tell it to go on infinitely."
+	input SetUseFastAnimation(boolean) : "Pass true to make the faith plate use fast animations rather than the default speed animations."
 
 	// Outputs
 	output OnGetEnabled(integer) : "Returns the state of the faith plate when the input GetEnable is called."

@@ -313,19 +313,19 @@ class CPropFaithPlate : CBaseAnimating
 // Inputs -------------------------------------
 
     [Input("Enable", FIELD_INPUT)]
-    void Enable( const InputData&in data )
+    void InputEnable( const InputData&in data )
     {
         this.SetEnabled(true, data.activator);
     }
 
     [Input("Disable", FIELD_INPUT)]
-    void Disable( const InputData&in data )
+    void InputDisable( const InputData&in data )
     {
         this.SetEnabled(false, data.activator);
     }
 
     [Input("Toggle", FIELD_INPUT)]
-    void Toggle( const InputData&in data )
+    void InputToggle( const InputData&in data )
     {
         this.m_bFaithPlateState = !this.m_bFaithPlateState;
         this.SetEnabled(this.m_bFaithPlateState, data.activator);
@@ -339,22 +339,28 @@ class CPropFaithPlate : CBaseAnimating
     }
 
     [Input("TempOff", FIELD_INPUT)]
-    void TempOff( const InputData&in data )
+    void InputTempOff( const InputData&in data )
     {
         EEPlateLog("TEMP OFF");
         this.SetTempState(false, data.activator);
     }
 
     [Input("GetEnabled", FIELD_INPUT)]
-    void GetEnabled( const InputData&in data )
+    void InputGetEnabled( const InputData&in data )
     {
         this.out_onGetEnabled.Fire(this.m_bFaithPlateState ? 1 : 0, data.activator, this);
     }
 
     [Input("SetTempStateTime", FIELD_INPUT)]
-    void SetTempStateTime( const InputData&in data )
+    void InputSetTempStateTime( const InputData&in data )
     {
         this.kv_fTempStateTime = data.value.Float();
+    }
+
+    [Input("SetUseFastAnimation", FIELD_INPUT)]
+    void InputSetUseFastAnimation( const InputData&in data )
+    {
+        this.kv_bFastAnimation = data.value.Bool();
     }
 
 // ---------------------------------------------
@@ -362,7 +368,7 @@ class CPropFaithPlate : CBaseAnimating
 // trigger_catapult Inputs -------------------------------------
 
     [Input("SetPlayerSpeed", FIELD_FLOAT)]
-    void SetPlayerSpeed( const InputData&in data )
+    void InputSetPlayerSpeed( const InputData&in data )
     {
         this.kv_fPlayerSpeed = data.value.Float();
         Variant setPlayerSpeedVal;
@@ -371,7 +377,7 @@ class CPropFaithPlate : CBaseAnimating
     }
 
     [Input("SetPhysicsSpeed", FIELD_FLOAT)]
-    void SetPhysicsSpeed( const InputData&in data )
+    void InputSetPhysicsSpeed( const InputData&in data )
     {
         this.kv_fPhysicsSpeed = data.value.Float();
         Variant setPhysicsSpeedVal;
@@ -380,7 +386,7 @@ class CPropFaithPlate : CBaseAnimating
     }
 
     [Input("SetLaunchTarget", FIELD_STRING)]
-    void SetLaunchTarget( const InputData&in data )
+    void InputSetLaunchTarget( const InputData&in data )
     {
         this.kv_sLaunchTarget = data.value.String();
         Variant setLaunchTargetVal;
