@@ -680,7 +680,7 @@ class CPropFaithPlate : CBaseAnimating
         if (this.m_iAnimFlingUp == -1)
             EEPlateLog("[Spawn] Failed to retrieve fling up animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
 
-        this.m_iAnimFlingFastAngled = this.LookupSequence(FAST_STRAIGHTUP_ANIM);
+        this.m_iAnimFlingFastUp = this.LookupSequence(FAST_STRAIGHTUP_ANIM);
         if (this.m_iAnimFlingFastUp == -1)
             EEPlateLog("[Spawn] Failed to retrieve fast up animation for oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
 
