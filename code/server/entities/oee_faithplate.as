@@ -11,28 +11,29 @@
 #include "../../shared/logging.as"
 #include "../../shared/math.as"
 
-ConVar oee_debug_plates("oee_debug_plates", "0");
+ConVar oee_fp_debug("oee_fp_debug", "0");
+ConVar oee_fp_upflingdegthreshold("oee_fp_upflingdegthreshold", "80.0");
 
 /**
 * @brief Specific logging function for oee_faithplate debugging.
-*        Needs "oee_debug_plates" to be 1 to log to console.
+*        Needs "oee_fp_debug" to be 1 to log to console.
 * @param Message to send to console.
 * @param Log level. 0 = Info, 1 = Warn
 */
 void EEPlateLog(const string&in msg, const int level = 0)
 {
-    if (!oee_debug_plates.GetBool() && level < 1)
+    if (!oee_fp_debug.GetBool() && level < 1)
         return;
 
     EELog("[CPropFaithPlate] " + msg, level);
 }
 
-[ServerCommand("oee_plates_inputs", "Test oee_faithplate using various inputs.")]
+[ServerCommand("oee_fp_debug_inputs", "Test oee_faithplate using various inputs.")]
 void TestPlates( const CommandArgs@ args )
 {
     if (args.ArgC() < 2)
     {
-        EEPlateLog("oee_plates_inputs: Usage 'oee_plates_inputs (Input Option) (TempStateTime if 6)\nEnable: 0\nDisable: 1\nToggle: 2\nTempOn: 3\nTempOff: 4\nGetEnabled: 5\nSetTempStateTime: 6", 1);
+        EEPlateLog("oee_fp_debug_inputs: Usage 'oee_fp_debug_inputs (Input Option) (TempStateTime if 6 or 0/1 if 7 for SetUseFastAnimation)\nEnable: 0\nDisable: 1\nToggle: 2\nTempOn: 3\nTempOff: 4\nGetEnabled: 5\nSetTempStateTime: 6\nSetUseFastAnimation: 7", 1);
         return;
     }
 
@@ -45,7 +46,7 @@ void TestPlates( const CommandArgs@ args )
         if (plate is null)
             continue;
 
-        switch (args.Arg(1).toInt())
+        switch (args[1].toInt())
         {
             case (0):
             {
@@ -79,9 +80,16 @@ void TestPlates( const CommandArgs@ args )
             }
             case (6):
             {
-                Variant setTempStateTimeVariant;
-                setTempStateTimeVariant.SetFloat(args.Arg(2).toFloat());
-                plate.FireInput("SetTempStateTime", setTempStateTimeVariant, 0.0f, null, null);
+                Variant var;
+                var.SetFloat(args[2].toFloat());
+                plate.FireInput("SetTempStateTime", var, 0.0f, null, null);
+                break;
+            }
+            case (7):
+            {
+                Variant var;
+                var.SetInt(args[2].toInt());
+                plate.FireInput("SetUseFastAnimation", var, 0.0f, null, null);
                 break;
             }
             default:
@@ -101,7 +109,7 @@ const string DEFAULT_128MODEL = "models/props/faith_plate_128.mdl";
 const string DEFAULT_LAUNCH_SOUND = "Metal_SeafloorCar.BulletImpact";
 const string DEFAULT_TICKING_SOUND = "World.RobotNegInteractPitchedUp";
 
-array<string>@ IDLE_ANIMS =
+const array<string>@ IDLE_ANIMS =
 {
     "idle",
     "ref",
