@@ -28,7 +28,7 @@ void EEPlateLog(const string&in msg, const int level = 0)
     EELog("[CPropFaithPlate] " + msg, level);
 }
 
-[ServerCommand("oee_fp_debug_inputs", "Test oee_faithplate using various inputs.")]
+[ServerCommand("oee_fp_debug_inputs", "Test oee_faithplate entities using various inputs. Will target ALL oee_faithplate entities.")]
 void TestPlates( const CommandArgs@ args )
 {
     if (args.ArgC() < 2)
@@ -109,6 +109,7 @@ const string DEFAULT_128MODEL = "models/props/faith_plate_128.mdl";
 const string DEFAULT_LAUNCH_SOUND = "Metal_SeafloorCar.BulletImpact";
 const string DEFAULT_TICKING_SOUND = "World.RobotNegInteractPitchedUp";
 
+// Vanilla, BEEMod, and Len's EverythingPBR Faith Plate models use one of these for their idle animation.
 const array<string>@ IDLE_ANIMS =
 {
     "idle",
@@ -120,7 +121,6 @@ const string ANGLED_ANIM = "angled";
 const string FAST_ANGLED_ANIM = "fast";
 const string STRAIGHTUP_ANIM = "straightup";
 const string FAST_STRAIGHTUP_ANIM = "fastup";
-const int UPWARDS_FLING_ANIM_DEGREE_THRESHOLD = 80.0f;
 const float TEMP_STATE_BLINK_INTERVAL = 0.5f;
 
 enum PlateSkins
@@ -143,7 +143,7 @@ class CPropFaithPlate : CBaseAnimating
 
 // Save/Restored Members -----------------------
 
-// TODO: Add save/restore fields for all these!
+    // TODO: Add save/restore fields for all these!
 
     // The trigger_catapult that is part of the entity.
     private EHandle<CBaseTrigger> m_pTriggerCatapult; // TODO: Replace with CTriggerCatapult once exposed.
@@ -221,7 +221,7 @@ class CPropFaithPlate : CBaseAnimating
     private Vector kv_vTriggerPosOffset; // Position offset from the origin where the trigger should go.
 
     [KeyValue("addSprite", FIELD_BOOLEAN)]
-    private bool kv_bAddSprite; // Add sprite attached to a faith plate's "light" attachment point on the model. This isn't available for the vanilla model but Len's EverythingPBR faith plate model does have it.
+    private bool kv_bAddSprite; // Add sprite attached to a faith plate's "light" attachment point on the model. This attachment point isn't available for the vanilla model but Len's EverythingPBR faith plate model does have it.
 
     [KeyValue("spriteOnColor", FIELD_COLOR32)]
     private Color kv_vSpriteOnColor; // Color for the sprite when the faith plate is enabled.
@@ -484,7 +484,7 @@ class CPropFaithPlate : CBaseAnimating
 
     private bool IsTargetUp()
     {
-        return m_fLaunchAngle >= UPWARDS_FLING_ANIM_DEGREE_THRESHOLD;
+        return m_fLaunchAngle >= oee_fp_upflingdegthreshold.GetFloat();
     }
 
 
@@ -659,7 +659,7 @@ class CPropFaithPlate : CBaseAnimating
             this.SetSolid(ESolidType::SOLID_VPHYSICS);
 
         // While we are initializing static physics for the model, if it has a parent, the engine will instead make a physics object that can effect other objects but objects can't effect it.
-        IPhysicsObject@ pPhys = @this.VPhysicsInitStatic();
+        IPhysicsObject@ pPhys = this.VPhysicsInitStatic();
         if (pPhys is null)
         {
             EEPlateLog("[Spawn] Failed to make VPhysics collision for model on oee_faithplate with name '{}' and index '{}'!".format(this.GetDebugName(), this.GetEntityIndex()), 1);
@@ -854,7 +854,7 @@ class CPropFaithPlate : CBaseAnimating
 
     void MainThink()
     {
-        if (oee_debug_plates.GetBool())
+        if (oee_fp_debug.GetBool())
             debug::EntityBounds(this.m_pTriggerCatapult.Get(), 255, 150, 0, 25, 0.05f);
 
         // Only animate if sequence playback rate is set to play the animation.
